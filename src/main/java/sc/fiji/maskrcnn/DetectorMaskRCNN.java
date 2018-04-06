@@ -7,50 +7,31 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import org.scijava.ItemIO;
-import org.scijava.command.Command;
-import org.scijava.io.location.FileLocation;
 import org.scijava.io.location.Location;
 import org.scijava.log.LogService;
 import org.scijava.plugin.Parameter;
-import org.scijava.plugin.Plugin;
 import org.tensorflow.Graph;
 import org.tensorflow.Session;
 import org.tensorflow.Session.Runner;
 import org.tensorflow.Tensor;
 
 import net.imagej.Dataset;
-import net.imagej.DatasetService;
-import net.imagej.ImageJ;
 import net.imagej.tensorflow.TensorFlowService;
 
-@Plugin(type = Command.class, menuPath = "Plugins>Sandbox>Mask RCNN Prediction", headless = true)
-public class DetectMicrotubule implements Command {
+public abstract class DetectorMaskRCNN {
 
-	private static final String MASK_RCNN_MODEL_URL = "/home/hadim/local/Data/Neural_Networks/Microtubules/tf_model_microtubule20180403T2203.zip";
-	private static final String MODEL_NAME = "microtubules";
-
-	private static final String INPUT_NODE_IMAGE = "input_image_1";
-	private static final String INPUT_NODE_IMAGE_META = "input_image_meta_1";
+	private static final String INPUT_NODE_IMAGE_NAME = "input_image_1";
+	private static final String INPUT_NODE_IMAGE_METADATA_NAME = "input_image_meta_1";
 	private static final List<String> OUTPUT_NODE_NAMES = Arrays.asList("output_detections", "output_mrcnn_class",
 			"output_mrcnn_bbox", "output_mrcnn_mask", "output_rois", "output_rpn_class", "output_rpn_bbox");
-	private static final List<String> CLASS_IDS = Arrays.asList("background", "microtubule");
+
 	private static final int DEFAULT_IMAGE_ID = 0;
 
 	@Parameter
 	private TensorFlowService tfService;
 
 	@Parameter
-	private DatasetService datasetService;
-
-	@Parameter
 	private LogService log;
-
-	@Parameter
-	private Dataset inputDataset;
-
-	@Parameter(type = ItemIO.OUTPUT)
-	private Dataset outputData;
 
 	private Graph graph;
 	private Session session;
@@ -58,52 +39,55 @@ public class DetectMicrotubule implements Command {
 	private Tensor<Float> inputImage = null;
 	private Tensor<Float> inputImageMetadata = null;
 
-	@Override
-	public void run() {
-
+	protected void loadModel(Location modelLocation, String modelName) {
 		try {
 			log.info("Load the model.");
-			final Location source = new FileLocation(MASK_RCNN_MODEL_URL);
-			this.graph = tfService.loadGraph(source, MODEL_NAME, "model.pb");
-
-			log.info("Preprocess image.");
-			this.preprocessInput(inputDataset);
-
-			log.debug(this.inputImageMetadata);
-			log.debug(this.inputImage);
-
-			// Build the runner with names of input and output nodes.
-			log.info("Setting up the prediction.");
+			this.graph = tfService.loadGraph(modelLocation, modelName, "model.pb");
 			this.session = new Session(this.graph);
-			Runner runner = this.session.runner();
-
-			runner = runner.feed(INPUT_NODE_IMAGE, this.inputImage);
-			runner = runner.feed(INPUT_NODE_IMAGE_META, this.inputImageMetadata);
-
-			for (String outputName : OUTPUT_NODE_NAMES) {
-				runner = runner.fetch(outputName);
-			}
-
-			// Run the model
-			log.info("Running the model.");
-			final List<Tensor<?>> outputsList = runner.run();
-
-			log.info("Postprocess predictions results.");
-			final Map<String, Tensor<?>> outputs = this.postProcessOutput(outputsList);
-
-			log.info(outputs);
-
-			// Do some cleaning
-			this.session.close();
-			this.graph.close();
-
 		} catch (IOException e) {
 			log.error(e);
 		}
 	}
 
-	private void preprocessInput(Dataset dataset) {
-		this.inputImage = ImgUtils.loadFromImgLib(inputDataset);
+	protected void predict(Dataset dataset, List<String> classIds) {
+
+		log.info("Preprocess image.");
+		this.preprocessInput(dataset, classIds);
+
+		log.debug(this.inputImageMetadata);
+		log.debug(this.inputImage);
+
+		// Build the runner with names of input and output nodes.
+		log.info("Setting up the prediction.");
+
+		Runner runner = this.session.runner();
+
+		runner = runner.feed(INPUT_NODE_IMAGE_NAME, this.inputImage);
+		runner = runner.feed(INPUT_NODE_IMAGE_METADATA_NAME, this.inputImageMetadata);
+
+		for (String outputName : OUTPUT_NODE_NAMES) {
+			runner = runner.fetch(outputName);
+		}
+
+		// Run the model
+		log.info("Running the model.");
+		final List<Tensor<?>> outputsList = runner.run();
+
+		log.info("Postprocess predictions results.");
+		final Map<String, Tensor<?>> outputs = this.postProcessOutput(outputsList);
+
+		log.info(outputs);
+
+	}
+
+	protected void clear() {
+		// Do some cleaning
+		this.session.close();
+		this.graph.close();
+	}
+
+	protected void preprocessInput(Dataset dataset, List<String> classIds) {
+		this.inputImage = ImgUtils.loadFromImgLib(dataset);
 		this.inputImage = ImgUtils.normalizeImage(this.inputImage);
 
 		int[] originalImageShape = new int[] { 61, 25, 3 };
@@ -111,7 +95,7 @@ public class DetectMicrotubule implements Command {
 		int[] window = new int[] { 61, 25, 125, 200 };
 		int scale = 1;
 
-		this.inputImageMetadata = this.getImageMetadata(originalImageShape, imageShape, window, scale);
+		this.inputImageMetadata = this.getImageMetadata(originalImageShape, imageShape, window, scale, classIds);
 	}
 
 	/*
@@ -128,9 +112,10 @@ public class DetectMicrotubule implements Command {
 	 * classes are present in all datasets (size=num_classes).
 	 * 
 	 */
-	private Tensor<Float> getImageMetadata(int[] originalImageShape, int[] imageShape, int[] window, int scale) {
+	protected Tensor<Float> getImageMetadata(int[] originalImageShape, int[] imageShape, int[] window, int scale,
+			List<String> classIds) {
 
-		int metadataSize = 12 + CLASS_IDS.size();
+		int metadataSize = 12 + classIds.size();
 		FloatBuffer fb = FloatBuffer.allocate(metadataSize);
 
 		int imageId = DEFAULT_IMAGE_ID; // Not important during prediction.
@@ -148,13 +133,13 @@ public class DetectMicrotubule implements Command {
 		fb.put(10, (float) window[3]);
 		fb.put(11, (float) scale);
 
-		for (int i = 0; i < CLASS_IDS.size(); i++) {
+		for (int i = 0; i < classIds.size(); i++) {
 			fb.put(12 + i, (float) i);
 		}
 		return Tensor.create(new long[] { 1, metadataSize }, fb);
 	}
 
-	private Map<String, Tensor<?>> postProcessOutput(List<Tensor<?>> outputsList) {
+	protected Map<String, Tensor<?>> postProcessOutput(List<Tensor<?>> outputsList) {
 
 		// Convert the list of tensors to a Map
 		final Map<String, Tensor<?>> outputs = new HashMap<>();
@@ -166,16 +151,20 @@ public class DetectMicrotubule implements Command {
 		return outputs;
 	}
 
-	public static void main(String[] args) throws IOException {
-		final ImageJ ij = new ImageJ();
-		ij.launch(args);
+	public Graph getGraph() {
+		return graph;
+	}
 
-		// Open an image and display it.
-		final String imagePath = "/home/hadim/Documents/Code/Postdoc/ij/testdata/test-tracking.tif";
-		final Object dataset = ij.io().open(imagePath);
-		ij.ui().show(dataset);
+	public Session getSession() {
+		return session;
+	}
 
-		ij.command().run(DetectMicrotubule.class, true, "inputDataset", dataset);
+	public Tensor<Float> getInputImage() {
+		return inputImage;
+	}
+
+	public Tensor<Float> getInputImageMetadata() {
+		return inputImageMetadata;
 	}
 
 }
