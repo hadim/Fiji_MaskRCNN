@@ -63,8 +63,9 @@
 
 		<!-- Override tensorflow version -->
 		<tensorflow.version>1.7.0</tensorflow.version>
+		<libtensorflow_jni_gpu.version>1.7.0</libtensorflow_jni_gpu.version>
 		<imagej-tensorflow.version>1.0.0</imagej-tensorflow.version>
-	
+
 
 		<!-- NB: Deploy releases to the ImageJ Maven repository. -->
 		<releaseProfiles>deploy-to-imagej</releaseProfiles>
@@ -104,10 +105,16 @@
 			<groupId>net.imagej</groupId>
 			<artifactId>ij</artifactId>
 		</dependency>
-		
+
 		<dependency>
 			<groupId>net.imagej</groupId>
 			<artifactId>imagej-tensorflow</artifactId>
+		</dependency>
+
+		<!-- GPU support only on Linux at the moment. See: https://www.tensorflow.org/versions/master/install/install_java -->
+		<dependency>
+			<groupId>org.tensorflow</groupId>
+			<artifactId>libtensorflow_jni_gpu</artifactId>
 		</dependency>
 
 		<!-- Enable IJ1 interface at runtime -->
