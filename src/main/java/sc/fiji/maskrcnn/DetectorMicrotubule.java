@@ -14,7 +14,7 @@ import org.scijava.plugin.Plugin;
 import net.imagej.Dataset;
 import net.imagej.ImageJ;
 
-@Plugin(type = Command.class, menuPath = "Plugins>Sandbox>Mask RCNN Prediction", headless = true)
+@Plugin(type = Command.class, menuPath = "Plugins>Segmentation>Detect Microtubules", headless = true)
 public class DetectorMicrotubule extends DetectorMaskRCNN implements Command {
 
 	private static final String MASK_RCNN_MODEL_URL = "/home/hadim/local/Data/Neural_Networks/Microtubules/tf_model_microtubule20180403T2203.zip";

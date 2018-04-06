@@ -63,7 +63,6 @@
 
 		<!-- Override tensorflow version -->
 		<tensorflow.version>1.7.0</tensorflow.version>
-		<libtensorflow_jni_gpu.version>1.7.0</libtensorflow_jni_gpu.version>
 		<imagej-tensorflow.version>1.0.0</imagej-tensorflow.version>
 
 
@@ -115,6 +114,7 @@
 		<dependency>
 			<groupId>org.tensorflow</groupId>
 			<artifactId>libtensorflow_jni_gpu</artifactId>
+			<version>1.7.0</version>
 		</dependency>
 
 		<!-- Enable IJ1 interface at runtime -->

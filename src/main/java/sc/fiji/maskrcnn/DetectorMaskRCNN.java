@@ -54,8 +54,8 @@ public abstract class DetectorMaskRCNN {
 		log.info("Preprocess image.");
 		this.preprocessInput(dataset, classIds);
 
-		log.debug(this.inputImageMetadata);
-		log.debug(this.inputImage);
+		log.info(this.inputImageMetadata);
+		log.info(this.inputImage);
 
 		// Build the runner with names of input and output nodes.
 		log.info("Setting up the prediction.");
