@@ -11,12 +11,18 @@ import org.scijava.io.location.Location;
 import org.scijava.log.LogService;
 import org.scijava.plugin.Parameter;
 import org.tensorflow.Graph;
+import org.tensorflow.Output;
 import org.tensorflow.Session;
 import org.tensorflow.Session.Runner;
 import org.tensorflow.Tensor;
 
 import net.imagej.Dataset;
+import net.imagej.ops.OpService;
+import net.imagej.tensorflow.GraphBuilder;
 import net.imagej.tensorflow.TensorFlowService;
+import net.imagej.tensorflow.Tensors;
+import net.imglib2.RandomAccessibleInterval;
+import net.imglib2.type.numeric.real.FloatType;
 
 public abstract class DetectorMaskRCNN {
 
@@ -33,10 +39,14 @@ public abstract class DetectorMaskRCNN {
 	@Parameter
 	private LogService log;
 
+	@Parameter
+	private OpService op;
+
 	private Graph graph;
 	private Session session;
 
 	private Tensor<Float> inputImage = null;
+	private Tensor<Float> inputPreprocessedImage = null;
 	private Tensor<Float> inputImageMetadata = null;
 
 	protected void loadModel(Location modelLocation, String modelName) {
@@ -49,10 +59,11 @@ public abstract class DetectorMaskRCNN {
 		}
 	}
 
-	protected void predict(Dataset dataset, List<String> classIds) {
+	protected void predict(Dataset dataset, List<String> classIds, int minDim, int maxDim, boolean pad,
+			float[] meanPixel) {
 
 		log.info("Preprocess image.");
-		this.preprocessInput(dataset, classIds);
+		this.preprocessInput(dataset, classIds, minDim, maxDim, pad, meanPixel);
 
 		log.info(this.inputImageMetadata);
 		log.info(this.inputImage);
@@ -62,7 +73,7 @@ public abstract class DetectorMaskRCNN {
 
 		Runner runner = this.session.runner();
 
-		runner = runner.feed(INPUT_NODE_IMAGE_NAME, this.inputImage);
+		runner = runner.feed(INPUT_NODE_IMAGE_NAME, this.inputPreprocessedImage);
 		runner = runner.feed(INPUT_NODE_IMAGE_METADATA_NAME, this.inputImageMetadata);
 
 		for (String outputName : OUTPUT_NODE_NAMES) {
@@ -86,16 +97,101 @@ public abstract class DetectorMaskRCNN {
 		this.graph.close();
 	}
 
-	protected void preprocessInput(Dataset dataset, List<String> classIds) {
-		this.inputImage = ImgUtils.loadFromImgLib(dataset);
-		this.inputImage = ImgUtils.normalizeImage(this.inputImage);
+	protected void preprocessInput(Dataset dataset, List<String> classIds, int minDim, int maxDim, boolean pad,
+			float[] meanPixel) {
 
-		int[] originalImageShape = new int[] { 61, 25, 3 };
-		int[] imageShape = new int[] { 256, 256, 3 };
-		int[] window = new int[] { 61, 25, 125, 200 };
-		int scale = 1;
+		this.inputImage = Tensors
+				.tensorFloat((RandomAccessibleInterval<FloatType>) op.run("convert.float32", dataset.getImgPlus()));
+
+		final Graph g = new Graph();
+		final GraphBuilder b = new GraphBuilder(g);
+
+		Output<Float> imageOutput = g.opBuilder("Const", "input").setAttr("dtype", this.inputImage.dataType())
+				.setAttr("value", this.inputImage).build().output(0);
+
+		if (imageOutput.shape().numDimensions() == 2) {
+			imageOutput = g.opBuilder("ExpandDims", "expand_batch").addInput(imageOutput)
+					.addInput(b.constant("batch_axis", 0)).build().output(0);
+		}
+
+		imageOutput = g.opBuilder("ExpandDims", "expand_channel").addInput(imageOutput)
+				.addInput(b.constant("channel_axis", -1)).build().output(0);
+
+		imageOutput = g.opBuilder("Sub", "sub_mean").addInput(imageOutput).addInput(b.constant("mean_pixel", meanPixel))
+				.build().output(0);
+
+		// TODO: convert to RGB
+		// imageOutput = g.opBuilder("image.grayscale_to_rgb",
+		// "grayscale_to_rgb").addInput(imageOutput).build().output(0);
+
+		int ori_h = (int) imageOutput.shape().size(1);
+		int ori_w = (int) imageOutput.shape().size(2);
+
+		int h = ori_h;
+		int w = ori_w;
+
+		int[] window = { 0, 0, h, w };
+		float scale = 1;
+		int[][] padding = { { 0, 0 }, { 0, 0 }, { 0, 0 } };
+		int image_max;
+
+		if (minDim != -1) {
+			scale = Math.max(1, minDim / Math.min(h, w));
+		}
+
+		if (maxDim != -1) {
+			image_max = Math.max(h, w);
+			if (Math.round(image_max * scale) > maxDim) {
+				scale = maxDim / image_max;
+			}
+		}
+
+		if (scale != 1) {
+			int[] new_size = { Math.round(h * scale), Math.round(w * scale) };
+			imageOutput = g.opBuilder("ResizeBilinear", "resize").addInput(imageOutput)
+					.addInput(b.constant("size", new_size)).build().output(0);
+		}
+
+		if (pad) {
+			h = (int) imageOutput.shape().size(1);
+			w = (int) imageOutput.shape().size(2);
+
+			int top_pad = (maxDim - h) / 2;
+			int bottom_pad = maxDim - h - top_pad;
+			int left_pad = (maxDim - w) / 2;
+			int right_pad = maxDim - w - left_pad;
+
+			padding[0][0] = top_pad;
+			padding[0][1] = bottom_pad;
+			padding[1][0] = left_pad;
+			padding[1][1] = right_pad;
+			padding[2][0] = 0;
+			padding[2][1] = 0;
+
+			window[0] = top_pad;
+			window[1] = left_pad;
+			window[2] = h + top_pad;
+			window[3] = w + left_pad;
+
+			// TODO: pad image
+			/*
+			 * imageOutput = g.opBuilder("PadToBoundingBox", "pad").addInput(imageOutput)
+			 * .addInput(b.constant("top_pad", top_pad)).addInput(b.constant("left_pad",
+			 * left_pad)) .addInput(b.constant("target_height",
+			 * maxDim)).addInput(b.constant("target_width", maxDim)).build() .output(0);
+			 */
+		}
+
+		log.info(imageOutput);
+
+		final Session s = new Session(g);
+		this.inputPreprocessedImage = (Tensor<Float>) s.runner().fetch(imageOutput.op().name()).run().get(0);
+
+		int[] originalImageShape = new int[] { ori_h, ori_w, 3 };
+		int[] imageShape = new int[] { h, w, 3 };
 
 		this.inputImageMetadata = this.getImageMetadata(originalImageShape, imageShape, window, scale, classIds);
+
 	}
 
 	/*
@@ -112,7 +208,7 @@ public abstract class DetectorMaskRCNN {
 	 * classes are present in all datasets (size=num_classes).
 	 * 
 	 */
-	protected Tensor<Float> getImageMetadata(int[] originalImageShape, int[] imageShape, int[] window, int scale,
+	protected Tensor<Float> getImageMetadata(int[] originalImageShape, int[] imageShape, int[] window, float scale,
 			List<String> classIds) {
 
 		int metadataSize = 12 + classIds.size();
@@ -134,7 +230,7 @@ public abstract class DetectorMaskRCNN {
 		fb.put(11, (float) scale);
 
 		for (int i = 0; i < classIds.size(); i++) {
-			fb.put(12 + i, (float) i);
+			fb.put(12 + i, (float) 0);
 		}
 		return Tensor.create(new long[] { 1, metadataSize }, fb);
 	}
