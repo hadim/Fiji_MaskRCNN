@@ -10,6 +10,7 @@ import java.util.Map;
 import org.scijava.io.location.Location;
 import org.scijava.log.LogService;
 import org.scijava.plugin.Parameter;
+import org.scijava.ui.UIService;
 import org.tensorflow.Graph;
 import org.tensorflow.Output;
 import org.tensorflow.Session;
@@ -32,6 +33,7 @@ public abstract class DetectorMaskRCNN {
 			"output_mrcnn_bbox", "output_mrcnn_mask", "output_rois", "output_rpn_class", "output_rpn_bbox");
 
 	private static final int DEFAULT_IMAGE_ID = 0;
+	private static final float[] MEAN_PIXEL = { (float) 123.7, (float) 116.8, (float) 103.9 };
 
 	@Parameter
 	private TensorFlowService tfService;
@@ -41,6 +43,9 @@ public abstract class DetectorMaskRCNN {
 
 	@Parameter
 	private OpService op;
+
+	@Parameter
+	private UIService ui;
 
 	private Graph graph;
 	private Session session;
@@ -59,11 +64,10 @@ public abstract class DetectorMaskRCNN {
 		}
 	}
 
-	protected void predict(Dataset dataset, List<String> classIds, int minDim, int maxDim, boolean pad,
-			float[] meanPixel) {
+	protected void predict(Dataset dataset, List<String> classIds, int minDim, int maxDim, boolean pad) {
 
 		log.info("Preprocess image.");
-		this.preprocessInput(dataset, classIds, minDim, maxDim, pad, meanPixel);
+		this.preprocessInput(dataset, classIds, minDim, maxDim, pad);
 
 		log.info(this.inputImageMetadata);
 		log.info(this.inputImage);
@@ -88,7 +92,6 @@ public abstract class DetectorMaskRCNN {
 		final Map<String, Tensor<?>> outputs = this.postProcessOutput(outputsList);
 
 		log.info(outputs);
-
 	}
 
 	protected void clear() {
@@ -97,8 +100,13 @@ public abstract class DetectorMaskRCNN {
 		this.graph.close();
 	}
 
-	protected void preprocessInput(Dataset dataset, List<String> classIds, int minDim, int maxDim, boolean pad,
-			float[] meanPixel) {
+	/*
+	 * Here is the multiple steps of preprocessing: - Convert to float32 - Add one
+	 * axis at 0: for batch axis and required by the model. - Add one axis at -1. -
+	 * Convert to RGB: channel axis at -1. - Subtract intensities to MEAN_PIXEL. -
+	 * Resize image if needed. - Pad image to a maxDimxmaxDim square with 0 value.
+	 */
+	protected void preprocessInput(Dataset dataset, List<String> classIds, int minDim, int maxDim, boolean pad) {
 
 		this.inputImage = Tensors
 				.tensorFloat((RandomAccessibleInterval<FloatType>) op.run("convert.float32", dataset.getImgPlus()));
@@ -117,8 +125,8 @@ public abstract class DetectorMaskRCNN {
 		imageOutput = g.opBuilder("ExpandDims", "expand_channel").addInput(imageOutput)
 				.addInput(b.constant("channel_axis", -1)).build().output(0);
 
-		imageOutput = g.opBuilder("Sub", "sub_mean").addInput(imageOutput).addInput(b.constant("mean_pixel", meanPixel))
-				.build().output(0);
+		imageOutput = g.opBuilder("Sub", "sub_mean").addInput(imageOutput)
+				.addInput(b.constant("mean_pixel", MEAN_PIXEL)).build().output(0);
 
 		// TODO: convert to RGB
 		// imageOutput = g.opBuilder("image.grayscale_to_rgb",
@@ -173,13 +181,11 @@ public abstract class DetectorMaskRCNN {
 			window[2] = h + top_pad;
 			window[3] = w + left_pad;
 
-			// TODO: pad image
-			/*
-			 * imageOutput = g.opBuilder("PadToBoundingBox", "pad").addInput(imageOutput)
-			 * .addInput(b.constant("top_pad", top_pad)).addInput(b.constant("left_pad",
-			 * left_pad)) .addInput(b.constant("target_height",
-			 * maxDim)).addInput(b.constant("target_width", maxDim)).build() .output(0);
-			 */
+			int[] stack = { 0, 0, top_pad, bottom_pad, left_pad, right_pad, 0, 0 };
+			Output<Float> opPaddings = g.opBuilder("Reshape", "reshape").addInput(b.constant("stack", stack))
+					.addInput(b.constant("extra", new int[] { 4, 2 })).build().output(0);
+
+			imageOutput = g.opBuilder("Pad", "pad").addInput(imageOutput).addInput(opPaddings).build().output(0);
 		}
 
 		log.info(imageOutput);
@@ -187,11 +193,14 @@ public abstract class DetectorMaskRCNN {
 		final Session s = new Session(g);
 		this.inputPreprocessedImage = (Tensor<Float>) s.runner().fetch(imageOutput.op().name()).run().get(0);
 
+		// Img imgPreprocessed = Tensors.imgFloat(this.inputPreprocessedImage, new int[]
+		// { 0, 3, 2, 1 });
+		// ui.show(imgPreprocessed);
+
 		int[] originalImageShape = new int[] { ori_h, ori_w, 3 };
 		int[] imageShape = new int[] { h, w, 3 };
 
 		this.inputImageMetadata = this.getImageMetadata(originalImageShape, imageShape, window, scale, classIds);
-
 	}
 
 	/*

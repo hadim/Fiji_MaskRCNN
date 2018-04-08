@@ -17,7 +17,7 @@ import net.imagej.ImageJ;
 @Plugin(type = Command.class, menuPath = "Plugins>Segmentation>Detect Microtubules", headless = true)
 public class DetectorMicrotubule extends DetectorMaskRCNN implements Command {
 
-	private static final String MASK_RCNN_MODEL_URL = "/home/hadim/local/Data/Neural_Networks/Microtubules/tf_model_microtubule20180403T2203.zip";
+	private static final String MASK_RCNN_MODEL_URL = "/home/hadim/Drive/Data/Neural_Network/Mask-RCNN/Microtubules/tf_model_coco_all.zip";
 	private static final String MODEL_NAME = "microtubules";
 	private static final List<String> CLASS_IDS = Arrays.asList("background", "microtubule");
 	
@@ -25,7 +25,6 @@ public class DetectorMicrotubule extends DetectorMaskRCNN implements Command {
 	private static final int MIN_DIM = 10;
 	private static final int MAX_DIM = 256;
 	private static final boolean PAD = true;
-	private static final float[] MEAN_PIXEL = { (float) 123.7, (float) 116.8, (float) 103.9};
 
 	@Parameter
 	private Dataset inputDataset;
@@ -39,7 +38,7 @@ public class DetectorMicrotubule extends DetectorMaskRCNN implements Command {
 		final Location source = new FileLocation(MASK_RCNN_MODEL_URL);
 		this.loadModel(source, MODEL_NAME);
 
-		this.predict(inputDataset, CLASS_IDS, MIN_DIM, MAX_DIM, PAD, MEAN_PIXEL);
+		this.predict(inputDataset, CLASS_IDS, MIN_DIM, MAX_DIM, PAD);
 
 		this.clear();
 	}
@@ -49,7 +48,8 @@ public class DetectorMicrotubule extends DetectorMaskRCNN implements Command {
 		ij.launch(args);
 
 		// Open an image and display it.
-		final String imagePath = "/home/hadim/Documents/Code/Postdoc/ij/testdata/test-tracking-single.tif";
+		String imagePath = "/home/hadim/Documents/Code/Postdoc/ij/testdata/single-256x256.tif";
+		imagePath = "/home/hadim/Documents/Code/Postdoc/ij/testdata/fake-flat-corrected.tif";
 		final Object dataset = ij.io().open(imagePath);
 		ij.ui().show(dataset);
 
