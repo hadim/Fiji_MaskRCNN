@@ -21,7 +21,7 @@ public class DetectorMicrotubule extends DetectorMaskRCNN implements Command {
 	private static final String MODEL_NAME = "microtubules";
 	private static final List<String> CLASS_IDS = Arrays.asList("background", "microtubule");
 	
-	// Could be parameters
+	// Those parameters are model-specific.
 	private static final int MIN_DIM = 10;
 	private static final int MAX_DIM = 256;
 	private static final boolean PAD = true;

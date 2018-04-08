@@ -122,15 +122,14 @@ public abstract class DetectorMaskRCNN {
 					.addInput(b.constant("batch_axis", 0)).build().output(0);
 		}
 
+		// Convert grayscale to RGB
 		imageOutput = g.opBuilder("ExpandDims", "expand_channel").addInput(imageOutput)
 				.addInput(b.constant("channel_axis", -1)).build().output(0);
+		imageOutput = g.opBuilder("Tile", "tile").addInput(imageOutput)
+				.addInput(b.constant("multiples", new int[] { 1, 1, 1, 3 })).build().output(0);
 
 		imageOutput = g.opBuilder("Sub", "sub_mean").addInput(imageOutput)
 				.addInput(b.constant("mean_pixel", MEAN_PIXEL)).build().output(0);
-
-		// TODO: convert to RGB
-		// imageOutput = g.opBuilder("image.grayscale_to_rgb",
-		// "grayscale_to_rgb").addInput(imageOutput).build().output(0);
 
 		int ori_h = (int) imageOutput.shape().size(1);
 		int ori_w = (int) imageOutput.shape().size(2);
@@ -181,10 +180,10 @@ public abstract class DetectorMaskRCNN {
 			window[2] = h + top_pad;
 			window[3] = w + left_pad;
 
+			// Pad image to maxDim x maxDim
 			int[] stack = { 0, 0, top_pad, bottom_pad, left_pad, right_pad, 0, 0 };
 			Output<Float> opPaddings = g.opBuilder("Reshape", "reshape").addInput(b.constant("stack", stack))
 					.addInput(b.constant("extra", new int[] { 4, 2 })).build().output(0);
-
 			imageOutput = g.opBuilder("Pad", "pad").addInput(imageOutput).addInput(opPaddings).build().output(0);
 		}
 
@@ -192,10 +191,6 @@ public abstract class DetectorMaskRCNN {
 
 		final Session s = new Session(g);
 		this.inputPreprocessedImage = (Tensor<Float>) s.runner().fetch(imageOutput.op().name()).run().get(0);
-
-		// Img imgPreprocessed = Tensors.imgFloat(this.inputPreprocessedImage, new int[]
-		// { 0, 3, 2, 1 });
-		// ui.show(imgPreprocessed);
 
 		int[] originalImageShape = new int[] { ori_h, ori_w, 3 };
 		int[] imageShape = new int[] { h, w, 3 };
