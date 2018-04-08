@@ -7,6 +7,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import org.scijava.Context;
 import org.scijava.io.location.Location;
 import org.scijava.log.LogService;
 import org.scijava.plugin.Parameter;
@@ -35,6 +36,9 @@ public abstract class DetectorMaskRCNN {
 	private static final int DEFAULT_IMAGE_ID = 0;
 	private static final float[] MEAN_PIXEL = { (float) 123.7, (float) 116.8, (float) 103.9 };
 
+	@Parameter
+	private Context context;
+	
 	@Parameter
 	private TensorFlowService tfService;
 
@@ -69,9 +73,6 @@ public abstract class DetectorMaskRCNN {
 		log.info("Preprocess image.");
 		this.preprocessInput(dataset, classIds, minDim, maxDim, pad);
 
-		log.info(this.inputImageMetadata);
-		log.info(this.inputImage);
-
 		// Build the runner with names of input and output nodes.
 		log.info("Setting up the prediction.");
 
@@ -89,9 +90,9 @@ public abstract class DetectorMaskRCNN {
 		final List<Tensor<?>> outputsList = runner.run();
 
 		log.info("Postprocess predictions results.");
-		final Map<String, Tensor<?>> outputs = this.postProcessOutput(outputsList);
+		DetectionResult results = this.postProcessOutput(outputsList);
 
-		log.info(outputs);
+		log.info(results);
 	}
 
 	protected void clear() {
@@ -187,8 +188,6 @@ public abstract class DetectorMaskRCNN {
 			imageOutput = g.opBuilder("Pad", "pad").addInput(imageOutput).addInput(opPaddings).build().output(0);
 		}
 
-		log.info(imageOutput);
-
 		final Session s = new Session(g);
 		this.inputPreprocessedImage = (Tensor<Float>) s.runner().fetch(imageOutput.op().name()).run().get(0);
 
@@ -239,16 +238,17 @@ public abstract class DetectorMaskRCNN {
 		return Tensor.create(new long[] { 1, metadataSize }, fb);
 	}
 
-	protected Map<String, Tensor<?>> postProcessOutput(List<Tensor<?>> outputsList) {
+	protected DetectionResult postProcessOutput(List<Tensor<?>> outputsList) {
 
 		// Convert the list of tensors to a Map
-		final Map<String, Tensor<?>> outputs = new HashMap<>();
+		final Map<String, Tensor<Float>> outputs = new HashMap<>();
 		for (int i = 0; i < outputsList.size(); i++) {
-			outputs.put(OUTPUT_NODE_NAMES.get(i), outputsList.get(i));
+			outputs.put(OUTPUT_NODE_NAMES.get(i), (Tensor<Float>) outputsList.get(i));
 		}
 
-		// TODO
-		return outputs;
+		DetectionResult results = new DetectionResult(context);
+		results.parseOutput(outputs);
+		return results;
 	}
 
 	public Graph getGraph() {
