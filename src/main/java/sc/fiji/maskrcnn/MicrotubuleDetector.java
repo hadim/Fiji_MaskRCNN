@@ -37,8 +37,8 @@ public class MicrotubuleDetector implements Command {
 		Tensor<?> imageMetadata = (Tensor<?>) module.getOutput("imageMetadata");
 		Tensor<?> windows = (Tensor<?>) module.getOutput("windows");
 		Tensor<?> anchors = (Tensor<?>) module.getOutput("anchors");
-
-		log.info(anchors);
+		Tensor<?> originalImageShape = (Tensor<?>) module.getOutput("originalImageShape");
+		Tensor<?> imageShape = (Tensor<?>) module.getOutput("imageShape");
 
 		// Detect objects.
 		log.info("Run detection.");
@@ -58,8 +58,8 @@ public class MicrotubuleDetector implements Command {
 		inputs = new HashMap<>();
 		inputs.put("detections", detections);
 		inputs.put("mrcnnMask", mrcnn_mask);
-		inputs.put("originalImageShape", Tensor.create(9));
-		inputs.put("imageShape", Tensor.create(5));
+		inputs.put("originalImageShape", originalImageShape);
+		inputs.put("imageShape", imageShape);
 		inputs.put("window", windows);
 		module = ij.module().waitFor(ij.command().run(PostprocessImage.class, true, inputs));
 		Tensor<?> finalROIs = (Tensor<?>) module.getOutput("rois");

@@ -64,6 +64,12 @@ public class PreprocessImage extends AbstractPredictor implements Command {
 	@Parameter(type = ItemIO.OUTPUT)
 	private Tensor<?> anchors;
 
+	@Parameter(type = ItemIO.OUTPUT)
+	private Tensor<?> originalImageShape;
+
+	@Parameter(type = ItemIO.OUTPUT)
+	private Tensor<?> imageShape;
+
 	@Parameter
 	private OpService op;
 
@@ -93,16 +99,18 @@ public class PreprocessImage extends AbstractPredictor implements Command {
 		// Run the model
 		final List<Tensor<?>> outputsList = runner.run();
 
-		// Save results in a dict
+		// Save results
 		moldedImage = outputsList.get(0);
 		imageMetadata = outputsList.get(1);
 		windows = outputsList.get(2);
 		anchors = outputsList.get(3);
 
-/*		// Convert molded image tensor to Dataset
-		Tensor<Float> moldedImageTensor = (Tensor<Float>) moldedImage;
-		Img moldedImage = Tensors.imgFloat(moldedImageTensor);
-		moldedImage = TensorUtils.reverseReorder(TensorUtils.reverse(moldedImage), new int[] { 1, 0, 2 });*/
+		// Write image shape before and after processing for later reuse.
+		Tensor<?> originalImage = (Tensor<?>) inputNodes.get("input_image");
+		long[] originalImageShapeArray = Arrays.copyOf(originalImage.shape(), 3);
+		originalImageShapeArray[2] = 1;
+		originalImageShape = org.tensorflow.Tensors.create(originalImageShapeArray);		
+		imageShape = org.tensorflow.Tensors.create(moldedImage.shape());
 
 		this.clear();
 	}

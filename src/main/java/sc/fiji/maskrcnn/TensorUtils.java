@@ -2,6 +2,8 @@ package sc.fiji.maskrcnn;
 
 import java.nio.DoubleBuffer;
 import java.nio.FloatBuffer;
+import java.nio.IntBuffer;
+import java.nio.LongBuffer;
 import java.util.Arrays;
 import java.util.stream.IntStream;
 
@@ -39,6 +41,28 @@ public class TensorUtils {
 			arrayDouble[i] = (double) arrayFloat[i];
 		}
 		return Tensor.create(arrayTensor.shape(), DoubleBuffer.wrap(arrayDouble));
+	}
+
+	public static Tensor<Float> convertIntToFloat(Tensor<Integer> arrayTensor) {
+		IntBuffer buff = IntBuffer.allocate(arrayTensor.numElements());
+		arrayTensor.writeTo(buff);
+		int[] arrayInt = buff.array();
+		float[] arrayFloat = new float[arrayInt.length];
+		for (int i = 0; i < arrayInt.length; i++) {
+			arrayFloat[i] = (float) arrayInt[i];
+		}
+		return Tensor.create(arrayTensor.shape(), FloatBuffer.wrap(arrayFloat));
+	}
+	
+	public static Tensor<Double> convertIntToDouble(Tensor<Integer> arrayTensor) {
+		LongBuffer buff = LongBuffer.allocate(arrayTensor.numElements());
+		arrayTensor.writeTo(buff);
+		long[] arrayInt = buff.array();
+		double[] arrayFloat = new double[arrayInt.length];
+		for (int i = 0; i < arrayInt.length; i++) {
+			arrayFloat[i] = (double) arrayInt[i];
+		}
+		return Tensor.create(arrayTensor.shape(), DoubleBuffer.wrap(arrayFloat));
 	}
 
 	public static Tensor<?> expandDimension(Tensor<?> tensor, int dimension) {
