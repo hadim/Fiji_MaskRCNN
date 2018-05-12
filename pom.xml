@@ -11,7 +11,7 @@
 	</parent>
 
 	<artifactId>Fiji-MaskRCNN</artifactId>
-	<version>0.1.1-SNAPSHOT</version>
+	<version>0.2.1-SNAPSHOT</version>
 
 	<name>Fiji-MaskRCNN</name>
 	<description>A Fiji plugin for Mask RCNN semantic segmentation.</description>
