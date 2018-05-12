@@ -1,9 +1,11 @@
 package sc.fiji.maskrcnn;
 
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import org.scijava.ItemIO;
 import org.scijava.command.Command;
 import org.scijava.log.LogService;
 import org.scijava.module.Module;
@@ -16,12 +18,10 @@ import ij.plugin.frame.RoiManager;
 import net.imagej.Dataset;
 import net.imagej.ImageJ;
 import net.imagej.table.DefaultGenericTable;
-import net.imagej.table.DefaultTableDisplay;
 import net.imagej.table.DoubleColumn;
 import net.imagej.table.GenericColumn;
 import net.imagej.table.GenericTable;
 import net.imagej.table.IntColumn;
-import net.imagej.table.TableDisplay;
 import net.imagej.tensorflow.TensorFlowService;
 
 @Plugin(type = Command.class, menuPath = "Plugins>Detection>Mask RCNN Detector", headless = true)
@@ -41,6 +41,12 @@ public class ObjectsDetector implements Command {
 
 	@Parameter(required = false)
 	private boolean verbose = false;
+
+	@Parameter(type = ItemIO.OUTPUT)
+	private List<Roi> roisList;
+
+	@Parameter(type = ItemIO.OUTPUT)
+	private GenericTable table;
 
 	@Parameter
 	protected TensorFlowService tfService;
@@ -98,19 +104,20 @@ public class ObjectsDetector implements Command {
 		Tensor<?> scores = (Tensor<?>) module.getOutput("scores");
 		Tensor<?> masks = (Tensor<?>) module.getOutput("masks");
 
-		this.fillRoiManager(finalROIs, scores, classIds);
-		this.fillTable(finalROIs, scores, classIds, classLabels);
+		this.roisList = this.fillRoiManager(finalROIs, scores, classIds);
+		this.table = this.fillTable(finalROIs, scores, classIds, classLabels);
 
 		log.info("Done");
 	}
 
-	protected void fillRoiManager(Tensor<?> rois, Tensor<?> scores, Tensor<?> classIds) {
+	protected List<Roi> fillRoiManager(Tensor<?> rois, Tensor<?> scores, Tensor<?> classIds) {
 		// Add ROI of detected objects to RoiManager
 		// TODO: add resizing masks step and output them as polygon.
 
 		RoiManager rm = RoiManager.getRoiManager();
 		rm.reset();
 
+		List<Roi> roisList = new ArrayList<>();
 		Roi box = null;
 		int x1, y1, x2, y2;
 
@@ -129,10 +136,12 @@ public class ObjectsDetector implements Command {
 			box = new Roi(y1, x1, y2 - y1, x2 - x1);
 			box.setName("BBox-" + i + "-Score-" + scoresArray[i] + "-ClassID-" + classIdsArray[i]);
 			rm.addRoi(box);
+			roisList.add(box);
 		}
+		return roisList;
 	}
 
-	protected void fillTable(Tensor<?> rois, Tensor<?> scores, Tensor<?> classIds, List<String> classLabels) {
+	protected GenericTable fillTable(Tensor<?> rois, Tensor<?> scores, Tensor<?> classIds, List<String> classLabels) {
 
 		GenericTable table = new DefaultGenericTable();
 		table.add(new IntColumn("id"));
@@ -169,11 +178,7 @@ public class ObjectsDetector implements Command {
 			table.set("height", i, x1 - x2);
 		}
 
-		// Display table
-		// TODO: display does not work...
-		TableDisplay disp = new DefaultTableDisplay();
-		disp.display(table);
-		disp.add(table);
+		return table;
 	}
 
 }
