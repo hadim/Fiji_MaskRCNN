@@ -77,12 +77,12 @@ public class MicrotubuleDetector implements Command {
 		Tensor<?> scores = (Tensor<?>) module.getOutput("scores");
 		Tensor<?> masks = (Tensor<?>) module.getOutput("masks");
 
-		this.fillRoiManager(finalROIs, scores);
+		this.fillRoiManager(finalROIs, scores, classIds);
 		
 		log.info("Done");
 	}
 
-	protected void fillRoiManager(Tensor<?> rois, Tensor<?> scores) {
+	protected void fillRoiManager(Tensor<?> rois, Tensor<?> scores, Tensor<?> classIds) {
 		// Add ROI of detected objects to RoiManager
 		// TODO: add resizing masks step and output them as polygon.
 
@@ -97,6 +97,7 @@ public class MicrotubuleDetector implements Command {
 		int[][] roisArray = rois.copyTo(new int[nRois][nCoords]);
 
 		float[] scoresArray = scores.copyTo(new float[(int) scores.shape()[0]]);
+		int[] classIdsArray = classIds.copyTo(new int[(int) classIds.shape()[0]]);
 
 		for (int i = 0; i < roisArray.length; i++) {
 			x1 = roisArray[i][0];
@@ -104,7 +105,7 @@ public class MicrotubuleDetector implements Command {
 			x2 = roisArray[i][2];
 			y2 = roisArray[i][3];
 			box = new Roi(y1, x1, y2 - y1, x2 - x1);
-			box.setName("BBox-" + i + "-Score-" + scoresArray[i]);
+			box.setName("BBox-" + i + "-Score-" + scoresArray[i] + "-ClassID-" + classIdsArray[i]);
 			rm.addRoi(box);
 		}
 	}

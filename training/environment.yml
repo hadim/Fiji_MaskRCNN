@@ -1,0 +1,34 @@
+# Create with `conda env create -f environment.yml`
+name: nn
+
+dependencies:
+  - python=3.6
+  - numpy
+  - scipy
+  - matplotlib
+  - pandas
+  - opencv
+  - tifffile
+  - scikit-image
+  - scikit-learn
+  - ipykernel
+  - opencv
+  - cython
+  - protobuf
+  - absl-py
+  - pyyaml
+  - tqdm
+  - ipywidgets
+  - h5py
+  - werkzeug
+  - markdown
+  - joblib
+  - pip:
+    - --no-deps
+    - keras
+    - imgaug
+    - pycocotools
+    - tensorflow-gpu
+    - tensorboard
+    - https://github.com/Borda/Mask_RCNN/archive/refactor.zip
+    - https://github.com/hadim/simuscope/archive/master.zip
