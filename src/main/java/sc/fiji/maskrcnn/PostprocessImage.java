@@ -13,7 +13,6 @@ import org.tensorflow.Tensor;
 
 public class PostprocessImage extends AbstractPredictor implements Command {
 
-	private static final String MODEL_URL = "/home/hadim/Drive/Data/Neural_Network/Mask-RCNN/Microtubules/saved_model/tf_model_coco_512_new.zip";
 	private static final String MODEL_NAME = "default";
 	private static final String MODEL_FILENAME = "postprocessing_graph.pb";
 
@@ -30,6 +29,9 @@ public class PostprocessImage extends AbstractPredictor implements Command {
 	};
 
 	private static final List<String> OUTPUT_NODE_NAMES = Arrays.asList("rois", "class_ids", "scores", "masks");
+
+	@Parameter
+	private String modelURL;
 
 	@Parameter
 	private Tensor<?> detections;
@@ -64,7 +66,7 @@ public class PostprocessImage extends AbstractPredictor implements Command {
 	@Override
 	public void run() {
 
-		this.loadModel(MODEL_URL, MODEL_NAME, MODEL_FILENAME);
+		this.loadModel(modelURL, MODEL_NAME, MODEL_FILENAME);
 
 		// Get input nodes as tensor.
 		Map<String, Object> inputNodes = new HashMap<>(DEFAULT_INPUT_NODES);

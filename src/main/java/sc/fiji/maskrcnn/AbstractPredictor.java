@@ -1,6 +1,7 @@
 package sc.fiji.maskrcnn;
 
 import java.io.IOException;
+import java.util.List;
 
 import org.scijava.io.location.FileLocation;
 import org.scijava.io.location.Location;
@@ -36,6 +37,18 @@ public abstract class AbstractPredictor {
 		} catch (IOException e) {
 			log.error(e);
 		}
+	}
+
+	protected List<String> loadLabels(String modelURL, String modelName, String fname) {
+
+		Location modelLocation = new FileLocation(modelURL);
+		try {
+			return tfService.loadLabels(modelLocation, modelName, fname);
+		} catch (IOException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+		return null;
 	}
 
 	protected void clear() {

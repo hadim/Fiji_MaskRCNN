@@ -1,7 +1,7 @@
 package sc.fiji.maskrcnn;
 
-import java.io.IOException;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 import org.scijava.command.Command;
@@ -18,12 +18,14 @@ import net.imagej.ImageJ;
 import net.imagej.table.DefaultGenericTable;
 import net.imagej.table.DefaultTableDisplay;
 import net.imagej.table.DoubleColumn;
+import net.imagej.table.GenericColumn;
 import net.imagej.table.GenericTable;
 import net.imagej.table.IntColumn;
 import net.imagej.table.TableDisplay;
+import net.imagej.tensorflow.TensorFlowService;
 
-@Plugin(type = Command.class, menuPath = "Plugins>Segmentation>Detect Microtubules", headless = true)
-public class MicrotubuleDetector implements Command {
+@Plugin(type = Command.class, menuPath = "Plugins>Detection>Mask RCNN Detector", headless = true)
+public class ObjectsDetector implements Command {
 
 	@Parameter
 	private ImageJ ij;
@@ -32,18 +34,29 @@ public class MicrotubuleDetector implements Command {
 	private LogService log;
 
 	@Parameter
+	private String modelURL;
+
+	@Parameter
+	private String modelName;
+
+	@Parameter
 	private Dataset inputDataset;
 
 	@Parameter(required = false)
 	private boolean verbose = false;
 
+	@Parameter
+	protected TensorFlowService tfService;
+
 	@Override
 	public void run() {
+
 		Module module;
 
 		// Preprocess the image.
 		log.info("Preprocess image.");
 		Map<String, Object> inputs = new HashMap<>();
+		inputs.put("modelURL", modelURL);
 		inputs.put("inputDataset", inputDataset);
 		inputs.put("verbose", verbose);
 		module = ij.module().waitFor(ij.command().run(PreprocessImage.class, true, inputs));
@@ -53,10 +66,13 @@ public class MicrotubuleDetector implements Command {
 		Tensor<?> anchors = (Tensor<?>) module.getOutput("anchors");
 		Tensor<?> originalImageShape = (Tensor<?>) module.getOutput("originalImageShape");
 		Tensor<?> imageShape = (Tensor<?>) module.getOutput("imageShape");
+		List<String> classLabels = (List<String>) module.getOutput("classLabels");
 
 		// Detect objects.
 		log.info("Run detection.");
 		inputs = new HashMap<>();
+		inputs.put("modelURL", modelURL);
+		inputs.put("modelName", modelName);
 		inputs.put("moldedImage", moldedImage);
 		inputs.put("imageMetadata", imageMetadata);
 		inputs.put("anchors", anchors);
@@ -71,6 +87,7 @@ public class MicrotubuleDetector implements Command {
 		// Postprocess results.
 		log.info("Postprocess results.");
 		inputs = new HashMap<>();
+		inputs.put("modelURL", modelURL);
 		inputs.put("detections", detections);
 		inputs.put("mrcnnMask", mrcnn_mask);
 		inputs.put("originalImageShape", originalImageShape);
@@ -84,7 +101,7 @@ public class MicrotubuleDetector implements Command {
 		Tensor<?> masks = (Tensor<?>) module.getOutput("masks");
 
 		this.fillRoiManager(finalROIs, scores, classIds);
-		this.fillTable(finalROIs, scores, classIds);
+		this.fillTable(finalROIs, scores, classIds, classLabels);
 
 		log.info("Done");
 	}
@@ -117,11 +134,12 @@ public class MicrotubuleDetector implements Command {
 		}
 	}
 
-	protected void fillTable(Tensor<?> rois, Tensor<?> scores, Tensor<?> classIds) {
+	protected void fillTable(Tensor<?> rois, Tensor<?> scores, Tensor<?> classIds, List<String> classLabels) {
 
 		GenericTable table = new DefaultGenericTable();
 		table.add(new IntColumn("id"));
 		table.add(new IntColumn("class_id"));
+		table.add(new GenericColumn("class_label"));
 		table.add(new DoubleColumn("score"));
 		table.add(new IntColumn("x"));
 		table.add(new IntColumn("y"));
@@ -142,10 +160,10 @@ public class MicrotubuleDetector implements Command {
 			y1 = roisArray[i][1];
 			x2 = roisArray[i][2];
 			y2 = roisArray[i][3];
-
 			table.appendRow();
 			table.set("id", i, i);
 			table.set("class_id", i, classIdsArray[i]);
+			table.set("class_label", i, classLabels.get(classIdsArray[i]));
 			table.set("score", i, (double) scoresArray[i]);
 			table.set("x", i, y1);
 			table.set("y", i, x1);
@@ -158,23 +176,6 @@ public class MicrotubuleDetector implements Command {
 		TableDisplay disp = new DefaultTableDisplay();
 		disp.display(table);
 		disp.add(table);
-	}
-
-	public static void main(String[] args) throws IOException {
-		final ImageJ ij = new ImageJ();
-		ij.launch(args);
-
-		// Open an image and display it.
-		String imagePath = "/home/hadim/Documents/Code/Postdoc/ij/testdata/single-256x256.tif";
-		// imagePath =
-		// "/home/hadim/Documents/Code/Postdoc/ij/testdata/fake-flat-corrected.tif";
-		final Object dataset = ij.io().open(imagePath);
-		ij.ui().show(dataset);
-
-		Map<String, Object> inputs = new HashMap<>();
-		inputs.put("inputDataset", dataset);
-		inputs.put("verbose", true);
-		ij.command().run(MicrotubuleDetector.class, true, inputs);
 	}
 
 }

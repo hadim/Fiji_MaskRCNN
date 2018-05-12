@@ -13,8 +13,6 @@ import org.tensorflow.Tensor;
 
 public class Detector extends AbstractPredictor implements Command {
 
-	private static final String MODEL_URL = "/home/hadim/Drive/Data/Neural_Network/Mask-RCNN/Microtubules/saved_model/tf_model_coco_512_new.zip";
-	private static final String MODEL_NAME = "microtubules";
 	private static final String MODEL_FILENAME = "model.pb";
 
 	// Specific parameters.
@@ -29,6 +27,12 @@ public class Detector extends AbstractPredictor implements Command {
 
 	private static final List<String> OUTPUT_NODE_NAMES = Arrays.asList("output_detections", "output_mrcnn_class",
 			"output_mrcnn_bbox", "output_mrcnn_mask", "output_rois");
+
+	@Parameter
+	private String modelURL;
+
+	@Parameter
+	private String modelName;
 
 	@Parameter
 	private Tensor<?> moldedImage;
@@ -60,7 +64,7 @@ public class Detector extends AbstractPredictor implements Command {
 	@Override
 	public void run() {
 
-		this.loadModel(MODEL_URL, MODEL_NAME, MODEL_FILENAME);
+		this.loadModel(modelURL, modelName, MODEL_FILENAME);
 
 		// Get input nodes as tensor.
 		Map<String, Object> inputNodes = new HashMap<>(DEFAULT_INPUT_NODES);

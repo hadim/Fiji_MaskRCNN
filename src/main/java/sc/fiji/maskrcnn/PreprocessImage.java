@@ -20,12 +20,8 @@ import net.imglib2.type.numeric.real.FloatType;
 
 public class PreprocessImage extends AbstractPredictor implements Command {
 
-	private static final String MODEL_URL = "/home/hadim/Drive/Data/Neural_Network/Mask-RCNN/Microtubules/saved_model/tf_model_coco_512_new.zip";
 	private static final String MODEL_NAME = "default";
 	private static final String MODEL_FILENAME = "preprocessing_graph.pb";
-
-	// Ideally, CLASS_IDS would be provided in the ZIP file containing the model.
-	private static final List<String> CLASS_IDS = Arrays.asList("background", "microtubule");
 
 	// Specific parameters.
 	private static final Map<String, Object> DEFAULT_INPUT_NODES = new HashMap<String, Object>() {
@@ -48,6 +44,9 @@ public class PreprocessImage extends AbstractPredictor implements Command {
 
 	private static final List<String> OUTPUT_NODE_NAMES = Arrays.asList("molded_image", "image_metadata", "window",
 			"anchors");
+
+	@Parameter
+	private String modelURL;
 
 	@Parameter
 	private Dataset inputDataset;
@@ -73,6 +72,9 @@ public class PreprocessImage extends AbstractPredictor implements Command {
 	@Parameter(type = ItemIO.OUTPUT)
 	private Tensor<?> imageShape;
 
+	@Parameter(type = ItemIO.OUTPUT)
+	private List<String> classLabels;
+
 	@Parameter
 	private OpService op;
 
@@ -84,7 +86,9 @@ public class PreprocessImage extends AbstractPredictor implements Command {
 	@Override
 	public void run() {
 
-		this.loadModel(MODEL_URL, MODEL_NAME, MODEL_FILENAME);
+		this.classLabels = this.loadLabels(modelURL, MODEL_NAME, "labels.txt");
+
+		this.loadModel(modelURL, MODEL_NAME, MODEL_FILENAME);
 
 		// Get input nodes as tensor.
 		Map<String, Object> inputNodes = this.preprocessInputs();
@@ -138,8 +142,8 @@ public class PreprocessImage extends AbstractPredictor implements Command {
 		inputNodes.put("original_image_height", ((Long) this.inputTensorImage.shape()[0]).intValue());
 		inputNodes.put("original_image_width", ((Long) this.inputTensorImage.shape()[1]).intValue());
 
-		int[] classIDs = new int[CLASS_IDS.size()];
-		for (int i = 0; i < CLASS_IDS.size(); i++) {
+		int[] classIDs = new int[this.classLabels.size()];
+		for (int i = 0; i < this.classLabels.size(); i++) {
 			classIDs[i] = 0;
 		}
 		inputNodes.put("class_ids", classIDs);
