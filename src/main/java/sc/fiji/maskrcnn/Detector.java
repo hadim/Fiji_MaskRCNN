@@ -30,7 +30,7 @@ public class Detector extends AbstractPredictor implements Command {
 
 	@Parameter
 	private String modelURL;
-
+	
 	@Parameter
 	private String modelName;
 
@@ -63,8 +63,8 @@ public class Detector extends AbstractPredictor implements Command {
 
 	@Override
 	public void run() {
-
-		this.loadModel(modelURL, modelName, MODEL_FILENAME);
+		
+		this.loadModel(modelURL, modelName, "model.pb");
 
 		// Get input nodes as tensor.
 		Map<String, Object> inputNodes = new HashMap<>(DEFAULT_INPUT_NODES);

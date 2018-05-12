@@ -37,9 +37,6 @@ public class ObjectsDetector implements Command {
 	private String modelURL;
 
 	@Parameter
-	private String modelName;
-
-	@Parameter
 	private Dataset inputDataset;
 
 	@Parameter(required = false)
@@ -67,6 +64,7 @@ public class ObjectsDetector implements Command {
 		Tensor<?> originalImageShape = (Tensor<?>) module.getOutput("originalImageShape");
 		Tensor<?> imageShape = (Tensor<?>) module.getOutput("imageShape");
 		List<String> classLabels = (List<String>) module.getOutput("classLabels");
+		String modelName = (String) module.getOutput("modelName");
 
 		// Detect objects.
 		log.info("Run detection.");

@@ -75,6 +75,9 @@ public class PreprocessImage extends AbstractPredictor implements Command {
 	@Parameter(type = ItemIO.OUTPUT)
 	private List<String> classLabels;
 
+	@Parameter(type = ItemIO.OUTPUT)
+	private String modelName;
+
 	@Parameter
 	private OpService op;
 
@@ -87,6 +90,8 @@ public class PreprocessImage extends AbstractPredictor implements Command {
 	public void run() {
 
 		this.classLabels = this.loadLabels(modelURL, MODEL_NAME, "labels.txt");
+		this.modelName = this.classLabels.get(0);
+		this.classLabels.remove(0);
 
 		this.loadModel(modelURL, MODEL_NAME, MODEL_FILENAME);
 
