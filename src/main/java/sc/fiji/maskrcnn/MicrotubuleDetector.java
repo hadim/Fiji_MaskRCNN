@@ -11,6 +11,8 @@ import org.scijava.plugin.Parameter;
 import org.scijava.plugin.Plugin;
 import org.tensorflow.Tensor;
 
+import ij.gui.Roi;
+import ij.plugin.frame.RoiManager;
 import net.imagej.Dataset;
 import net.imagej.ImageJ;
 
@@ -74,11 +76,37 @@ public class MicrotubuleDetector implements Command {
 		Tensor<?> classIds = (Tensor<?>) module.getOutput("class_ids");
 		Tensor<?> scores = (Tensor<?>) module.getOutput("scores");
 		Tensor<?> masks = (Tensor<?>) module.getOutput("masks");
+
+		this.fillRoiManager(finalROIs, scores);
 		
+		log.info("Done");
+	}
+
+	protected void fillRoiManager(Tensor<?> rois, Tensor<?> scores) {
 		// Add ROI of detected objects to RoiManager
 		// TODO: add resizing masks step and output them as polygon.
-		
 
+		RoiManager rm = RoiManager.getRoiManager();
+		rm.reset();
+
+		Roi box = null;
+		int x1, y1, x2, y2;
+
+		int nRois = (int) rois.shape()[0];
+		int nCoords = (int) rois.shape()[1];
+		int[][] roisArray = rois.copyTo(new int[nRois][nCoords]);
+
+		float[] scoresArray = scores.copyTo(new float[(int) scores.shape()[0]]);
+
+		for (int i = 0; i < roisArray.length; i++) {
+			x1 = roisArray[i][0];
+			y1 = roisArray[i][1];
+			x2 = roisArray[i][2];
+			y2 = roisArray[i][3];
+			box = new Roi(y1, x1, y2 - y1, x2 - x1);
+			box.setName("BBox-" + i + "-Score-" + scoresArray[i]);
+			rm.addRoi(box);
+		}
 	}
 
 	public static void main(String[] args) throws IOException {
