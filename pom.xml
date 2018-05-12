@@ -10,13 +10,13 @@
 		<relativePath />
 	</parent>
 
-	<artifactId>Fiji-MaskRCNN</artifactId>
+	<artifactId>Fiji_MaskRCNN</artifactId>
 	<version>0.2.1-SNAPSHOT</version>
 
-	<name>Fiji-MaskRCNN</name>
+	<name>Fiji_MaskRCNN</name>
 	<description>A Fiji plugin for Mask RCNN semantic segmentation.</description>
 
-	<url>https://github.com/hadim/Fiji-MaskRCNN</url>
+	<url>https://github.com/hadim/Fiji_MaskRCNN</url>
 	<inceptionYear>2018</inceptionYear>
 
 	<organization>
@@ -58,7 +58,7 @@
 	</contributors>
 
 	<properties>
-		<package-name>Fiji-MaskRCNN</package-name>
+		<package-name>Fiji_MaskRCNN</package-name>
 		<license.licenseName>mit</license.licenseName>
 		<license.copyrightOwners>Hadrien Mary</license.copyrightOwners>
 
@@ -78,18 +78,18 @@
 	</mailingLists>
 
 	<scm>
-		<connection>scm:git:git://github.com/hadim/Fiji-MaskRCNN</connection>
-		<developerConnection>scm:git:git@github.com:hadim/Fiji-MaskRCNN</developerConnection>
+		<connection>scm:git:git://github.com/hadim/Fiji_MaskRCNN</connection>
+		<developerConnection>scm:git:git@github.com:hadim/Fiji_MaskRCNN</developerConnection>
 		<tag>HEAD</tag>
-		<url>https://github.com/hadim/Fiji-MaskRCNN</url>
+		<url>https://github.com/hadim/Fiji_MaskRCNN</url>
 	</scm>
 	<issueManagement>
 		<system>GitHub Issues</system>
-		<url>https://github.com/hadim/Fiji-MaskRCNN/issues</url>
+		<url>https://github.com/hadim/Fiji_MaskRCNN/issues</url>
 	</issueManagement>
 	<ciManagement>
 		<system>Jenkins</system>
-		<url>http://jenkins.imagej.net/job/Fiji-MaskRCNN</url>
+		<url>http://jenkins.imagej.net/job/Fiji_MaskRCNN</url>
 	</ciManagement>
 
 	<dependencies>
