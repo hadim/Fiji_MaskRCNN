@@ -55,6 +55,15 @@ public class ObjectsDetector implements Command {
 	@Override
 	public void run() {
 
+		try {
+			this.checkInput();
+			this.runPrediction();
+		} catch (Exception e) {
+			log.error(e);
+		}
+	}
+
+	private void runPrediction() {
 		Module module;
 
 		// Preprocess the image.
@@ -180,6 +189,20 @@ public class ObjectsDetector implements Command {
 		}
 
 		return table;
+	}
+
+	public void checkInput() throws Exception {
+		if (this.inputDataset.numDimensions() != 2) {
+			throw new Exception("Input image must have exactly 2 dimensions (XY).");
+		}
+		
+		// TODO: should be setup from model parameters.
+		if (this.inputDataset.dimension(0) >= 512) {
+			throw new Exception("Width cannot be greater than 512 pixels.");
+		}
+		if (this.inputDataset.dimension(1) >= 512) {
+			throw new Exception("Height cannot be greater than 512 pixels.");
+		}
 	}
 
 }

@@ -25,8 +25,6 @@ public class TestPlugin {
 
 		// Open an image and display it.
 		String imagePath = "/home/hadim/Documents/Code/Postdoc/ij/testdata/single-256x256.tif";
-		// imagePath =
-		// "/home/hadim/Documents/Code/Postdoc/ij/testdata/fake-flat-corrected.tif";
 
 		final Object dataset = ij.io().open(imagePath);
 		ij.ui().show(dataset);
