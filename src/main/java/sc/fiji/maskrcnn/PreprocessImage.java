@@ -24,6 +24,8 @@ public class PreprocessImage extends AbstractPredictor implements Command {
 	private static final String MODEL_FILENAME = "preprocessing_graph.pb";
 
 	// Specific parameters.
+	// TODO: Ideally those parameters would be automatically read from the ZIP file.
+	// A YAML file would be ideal as a file format for this kind of parameters.
 	private static final Map<String, Object> DEFAULT_INPUT_NODES = new HashMap<String, Object>() {
 		private static final long serialVersionUID = 1L;
 		{
