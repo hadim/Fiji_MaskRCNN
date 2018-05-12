@@ -20,7 +20,7 @@ import net.imglib2.type.numeric.real.FloatType;
 
 public class PreprocessImage extends AbstractPredictor implements Command {
 
-	private static final String MODEL_URL = "/home/hadim/Drive/Data/Neural_Network/Mask-RCNN/Microtubules/saved_model/manual_complete_model_coco_512_new.zip";
+	private static final String MODEL_URL = "/home/hadim/Drive/Data/Neural_Network/Mask-RCNN/Microtubules/saved_model/tf_model_coco_512_new.zip";
 	private static final String MODEL_NAME = "default";
 	private static final String MODEL_FILENAME = "preprocessing_graph.pb";
 
