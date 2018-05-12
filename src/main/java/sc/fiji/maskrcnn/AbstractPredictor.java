@@ -41,7 +41,7 @@ public abstract class AbstractPredictor {
 	protected void clear() {
 		// Do some cleaning
 		this.session.close();
-		this.graph.close();
+		tfService.dispose();
 	}
 
 	public Graph getGraph() {
