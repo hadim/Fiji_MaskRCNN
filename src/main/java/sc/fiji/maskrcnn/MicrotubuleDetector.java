@@ -26,13 +26,19 @@ public class MicrotubuleDetector implements Command {
 	@Parameter
 	private Dataset inputDataset;
 
+	@Parameter(required = false)
+	private boolean verbose = false;
+
 	@Override
 	public void run() {
 		Module module;
 
 		// Preprocess the image.
 		log.info("Preprocess image.");
-		module = ij.module().waitFor(ij.command().run(PreprocessImage.class, true, "inputDataset", inputDataset));
+		Map<String, Object> inputs = new HashMap<>();
+		inputs.put("inputDataset", inputDataset);
+		inputs.put("verbose", verbose);
+		module = ij.module().waitFor(ij.command().run(PreprocessImage.class, true, inputs));
 		Tensor<?> moldedImage = (Tensor<?>) module.getOutput("moldedImage");
 		Tensor<?> imageMetadata = (Tensor<?>) module.getOutput("imageMetadata");
 		Tensor<?> windows = (Tensor<?>) module.getOutput("windows");
@@ -42,16 +48,17 @@ public class MicrotubuleDetector implements Command {
 
 		// Detect objects.
 		log.info("Run detection.");
-		Map<String, Object> inputs = new HashMap<>();
+		inputs = new HashMap<>();
 		inputs.put("moldedImage", moldedImage);
 		inputs.put("imageMetadata", imageMetadata);
 		inputs.put("anchors", anchors);
+		inputs.put("verbose", verbose);
 		module = ij.module().waitFor(ij.command().run(Detector.class, true, inputs));
 		Tensor<?> detections = (Tensor<?>) module.getOutput("detections");
 		Tensor<?> mrcnn_mask = (Tensor<?>) module.getOutput("mrcnn_mask");
-		// Tensor<?> mrcnn_class = (Tensor<?>) module.getOutput("mrcnn_class");
-		// Tensor<?> mrcnn_bbox = (Tensor<?>) module.getOutput("mrcnn_bbox");
-		// Tensor<?> rois = (Tensor<?>) module.getOutput("rois");
+		Tensor<?> mrcnn_class = (Tensor<?>) module.getOutput("mrcnn_class");
+		Tensor<?> mrcnn_bbox = (Tensor<?>) module.getOutput("mrcnn_bbox");
+		Tensor<?> rois = (Tensor<?>) module.getOutput("rois");
 
 		// Postprocess results.
 		log.info("Postprocess results.");
@@ -61,16 +68,13 @@ public class MicrotubuleDetector implements Command {
 		inputs.put("originalImageShape", originalImageShape);
 		inputs.put("imageShape", imageShape);
 		inputs.put("window", windows);
+		inputs.put("verbose", verbose);
 		module = ij.module().waitFor(ij.command().run(PostprocessImage.class, true, inputs));
 		Tensor<?> finalROIs = (Tensor<?>) module.getOutput("rois");
 		Tensor<?> classIds = (Tensor<?>) module.getOutput("class_ids");
 		Tensor<?> scores = (Tensor<?>) module.getOutput("scores");
 		Tensor<?> masks = (Tensor<?>) module.getOutput("masks");
 
-		log.info(finalROIs);
-		log.info(classIds);
-		log.info(scores);
-		log.info(masks);
 	}
 
 	public static void main(String[] args) throws IOException {
@@ -84,7 +88,10 @@ public class MicrotubuleDetector implements Command {
 		final Object dataset = ij.io().open(imagePath);
 		ij.ui().show(dataset);
 
-		ij.command().run(MicrotubuleDetector.class, true, "inputDataset", dataset);
+		Map<String, Object> inputs = new HashMap<>();
+		inputs.put("inputDataset", dataset);
+		inputs.put("verbose", true);
+		ij.command().run(MicrotubuleDetector.class, true, inputs);
 	}
 
 }

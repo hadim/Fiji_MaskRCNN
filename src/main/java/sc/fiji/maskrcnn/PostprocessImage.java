@@ -46,6 +46,9 @@ public class PostprocessImage extends AbstractPredictor implements Command {
 	@Parameter
 	private Tensor<?> window;
 
+	@Parameter(required = false)
+	private boolean verbose = false;
+
 	@Parameter(type = ItemIO.OUTPUT)
 	private Tensor<?> rois;
 
@@ -66,27 +69,12 @@ public class PostprocessImage extends AbstractPredictor implements Command {
 		// Get input nodes as tensor.
 		Map<String, Object> inputNodes = new HashMap<>(DEFAULT_INPUT_NODES);
 
-		detections = TensorUtils.convertFloatToDouble((Tensor<Float>) detections);
-		window = TensorUtils.convertIntToFloat((Tensor<Integer>) window);
-		
-		mrcnnMask = TensorUtils.convertFloatToDouble((Tensor<Float>) mrcnnMask);
-		detections = TensorUtils.convertFloatToDouble((Tensor<Float>) detections);
-		
-		originalImageShape = TensorUtils.convertIntToDouble((Tensor<Integer>) originalImageShape);
-		imageShape = TensorUtils.convertIntToDouble((Tensor<Integer>) imageShape);
-		
 		inputNodes.put("detections", detections);
 		inputNodes.put("mrcnn_mask", mrcnnMask);
 		inputNodes.put("original_image_shape", originalImageShape);
 		inputNodes.put("image_shape", imageShape);
 		inputNodes.put("window", window);
-		
-		log.info(detections);
-		log.info(mrcnnMask);
-		log.info(originalImageShape);
-		log.info(imageShape);
-		log.info(window);
-		
+
 		// Setup the runner with input and output nodes.
 		Runner runner = this.session.runner();
 		for (Map.Entry<String, Object> entry : inputNodes.entrySet()) {
@@ -106,6 +94,13 @@ public class PostprocessImage extends AbstractPredictor implements Command {
 		class_ids = outputsList.get(1);
 		scores = outputsList.get(2);
 		masks = outputsList.get(3);
+
+		if (verbose) {
+			log.info("rois : " + rois);
+			log.info("class_ids : " + class_ids);
+			log.info("scores : " + scores);
+			log.info("masks : " + masks);
+		}
 
 		this.clear();
 	}

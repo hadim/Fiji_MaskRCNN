@@ -36,12 +36,12 @@ public class PreprocessImage extends AbstractPredictor implements Command {
 			put("original_image_width", null);
 			put("image_min_dimension", 10);
 			put("image_max_dimension", 512);
-			put("minimum_scale", 1.0);
+			put("minimum_scale", 1.0f);
 			put("mean_pixels", new float[] { 123.7f, 116.8f, 103.9f });
 			put("class_ids", null);
 			put("backbone_strides", new int[] { 4, 8, 16, 32, 64 });
 			put("rpn_anchor_scales", new int[] { 8, 16, 32, 64, 128 });
-			put("rpn_anchor_ratios", new double[] { 0.5, 1, 2 });
+			put("rpn_anchor_ratios", new float[] { 0.5f, 1f, 2f });
 			put("rpn_anchor_stride", 1);
 		}
 	};
@@ -51,6 +51,9 @@ public class PreprocessImage extends AbstractPredictor implements Command {
 
 	@Parameter
 	private Dataset inputDataset;
+
+	@Parameter(required = false)
+	private boolean verbose = false;
 
 	@Parameter(type = ItemIO.OUTPUT)
 	private Tensor<?> moldedImage;
@@ -109,8 +112,17 @@ public class PreprocessImage extends AbstractPredictor implements Command {
 		Tensor<?> originalImage = (Tensor<?>) inputNodes.get("input_image");
 		long[] originalImageShapeArray = Arrays.copyOf(originalImage.shape(), 3);
 		originalImageShapeArray[2] = 1;
-		originalImageShape = org.tensorflow.Tensors.create(originalImageShapeArray);		
+		originalImageShape = org.tensorflow.Tensors.create(originalImageShapeArray);
 		imageShape = org.tensorflow.Tensors.create(moldedImage.shape());
+
+		if (verbose) {
+			log.info("moldedImage : " + moldedImage);
+			log.info("imageMetadata : " + imageMetadata);
+			log.info("windows : " + windows);
+			log.info("anchors : " + anchors);
+			log.info("originalImageShape : " + originalImageShape);
+			log.info("imageShape : " + imageShape);
+		}
 
 		this.clear();
 	}
@@ -143,14 +155,14 @@ public class PreprocessImage extends AbstractPredictor implements Command {
 		inputNodes.put("image_max_dimension",
 				org.tensorflow.Tensors.create((int) inputNodes.get("image_max_dimension")));
 
-		inputNodes.put("minimum_scale", org.tensorflow.Tensors.create((double) inputNodes.get("minimum_scale")));
+		inputNodes.put("minimum_scale", org.tensorflow.Tensors.create((float) inputNodes.get("minimum_scale")));
 		inputNodes.put("mean_pixels", org.tensorflow.Tensors.create((float[]) inputNodes.get("mean_pixels")));
 		inputNodes.put("class_ids", org.tensorflow.Tensors.create((int[]) inputNodes.get("class_ids")));
 
 		inputNodes.put("backbone_strides", org.tensorflow.Tensors.create((int[]) inputNodes.get("backbone_strides")));
 		inputNodes.put("rpn_anchor_scales", org.tensorflow.Tensors.create((int[]) inputNodes.get("rpn_anchor_scales")));
 		inputNodes.put("rpn_anchor_ratios",
-				org.tensorflow.Tensors.create((double[]) inputNodes.get("rpn_anchor_ratios")));
+				org.tensorflow.Tensors.create((float[]) inputNodes.get("rpn_anchor_ratios")));
 		inputNodes.put("rpn_anchor_stride", org.tensorflow.Tensors.create((int) inputNodes.get("rpn_anchor_stride")));
 
 		return inputNodes;

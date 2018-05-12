@@ -39,6 +39,9 @@ public class Detector extends AbstractPredictor implements Command {
 	@Parameter
 	private Tensor<?> anchors;
 
+	@Parameter(required = false)
+	private boolean verbose = false;
+
 	@Parameter(type = ItemIO.OUTPUT)
 	private Tensor<?> detections;
 
@@ -65,11 +68,9 @@ public class Detector extends AbstractPredictor implements Command {
 		moldedImage = TensorUtils.expandDimension(moldedImage, 0);
 		inputNodes.put("input_image", moldedImage);
 
-		imageMetadata = TensorUtils.convertDoubleToFloat((Tensor<Double>) imageMetadata);
 		imageMetadata = TensorUtils.expandDimension(imageMetadata, 0);
 		inputNodes.put("input_image_meta", imageMetadata);
 
-		anchors = TensorUtils.convertDoubleToFloat((Tensor<Double>) anchors);
 		anchors = TensorUtils.expandDimension(anchors, 0);
 		inputNodes.put("input_anchors", anchors);
 
@@ -92,6 +93,14 @@ public class Detector extends AbstractPredictor implements Command {
 		mrcnn_bbox = outputsList.get(2);
 		mrcnn_mask = outputsList.get(3);
 		rois = outputsList.get(4);
+
+		if (verbose) {
+			log.info("detections : " + detections);
+			log.info("mrcnn_class : " + mrcnn_class);
+			log.info("mrcnn_bbox : " + mrcnn_bbox);
+			log.info("mrcnn_mask : " + mrcnn_mask);
+			log.info("rois : " + rois);
+		}
 
 		this.clear();
 	}
