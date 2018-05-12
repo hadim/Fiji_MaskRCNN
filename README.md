@@ -1,3 +1,5 @@
+[![](https://travis-ci.org/hadim/Fiji_MaskRCNN.svg?branch=master)](https://travis-ci.org/hadim/Fiji_MaskRCNN)
+
 # Fiji_MaskRCNN
 
 A Fiji plugin for [Mask RCNN semantic segmentation](https://arxiv.org/abs/1703.06870).
