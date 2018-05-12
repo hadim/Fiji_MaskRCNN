@@ -74,6 +74,10 @@ public class MicrotubuleDetector implements Command {
 		Tensor<?> classIds = (Tensor<?>) module.getOutput("class_ids");
 		Tensor<?> scores = (Tensor<?>) module.getOutput("scores");
 		Tensor<?> masks = (Tensor<?>) module.getOutput("masks");
+		
+		// Add ROI of detected objects to RoiManager
+		// TODO: add resizing masks step and output them as polygon.
+		
 
 	}
 

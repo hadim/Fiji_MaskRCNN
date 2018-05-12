@@ -78,7 +78,6 @@ public class PostprocessImage extends AbstractPredictor implements Command {
 		// Setup the runner with input and output nodes.
 		Runner runner = this.session.runner();
 		for (Map.Entry<String, Object> entry : inputNodes.entrySet()) {
-			log.info(entry.getKey());
 			runner = runner.feed(entry.getKey(), (Tensor<?>) entry.getValue());
 		}
 
