@@ -3,7 +3,6 @@ package sc.fiji.maskrcnn;
 import java.io.IOException;
 import java.util.List;
 
-import org.scijava.io.location.FileLocation;
 import org.scijava.io.location.Location;
 import org.scijava.log.LogService;
 import org.scijava.plugin.Parameter;
@@ -23,13 +22,7 @@ public abstract class AbstractPredictor {
 	protected Graph graph;
 	protected Session session;
 
-	protected void loadModel(String modelURL, String modelName) {
-		this.loadModel(modelURL, modelName, modelName);
-	}
-
-	protected void loadModel(String modelURL, String modelName, String modelFilename) {
-
-		final Location modelLocation = new FileLocation(modelURL);
+	protected void loadModel(Location modelLocation, String modelName, String modelFilename) {
 
 		try {
 			this.graph = tfService.loadGraph(modelLocation, modelName, modelFilename);
@@ -39,9 +32,8 @@ public abstract class AbstractPredictor {
 		}
 	}
 
-	protected List<String> loadLabels(String modelURL, String modelName, String fname) {
+	protected List<String> loadLabels(Location modelLocation, String modelName, String fname) {
 
-		Location modelLocation = new FileLocation(modelURL);
 		try {
 			return tfService.loadLabels(modelLocation, modelName, fname);
 		} catch (IOException e) {

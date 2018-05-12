@@ -7,6 +7,7 @@ import java.util.Map;
 
 import org.scijava.ItemIO;
 import org.scijava.command.Command;
+import org.scijava.io.location.Location;
 import org.scijava.log.LogService;
 import org.scijava.module.Module;
 import org.scijava.plugin.Parameter;
@@ -34,7 +35,7 @@ public class ObjectsDetector implements Command {
 	private LogService log;
 
 	@Parameter
-	private String modelURL;
+	private Location modelLocation;
 
 	@Parameter
 	private Dataset inputDataset;
@@ -59,7 +60,7 @@ public class ObjectsDetector implements Command {
 		// Preprocess the image.
 		log.info("Preprocess image.");
 		Map<String, Object> inputs = new HashMap<>();
-		inputs.put("modelURL", modelURL);
+		inputs.put("modelLocation", modelLocation);
 		inputs.put("inputDataset", inputDataset);
 		inputs.put("verbose", verbose);
 		module = ij.module().waitFor(ij.command().run(PreprocessImage.class, true, inputs));
@@ -75,7 +76,7 @@ public class ObjectsDetector implements Command {
 		// Detect objects.
 		log.info("Run detection.");
 		inputs = new HashMap<>();
-		inputs.put("modelURL", modelURL);
+		inputs.put("modelLocation", modelLocation);
 		inputs.put("modelName", modelName);
 		inputs.put("moldedImage", moldedImage);
 		inputs.put("imageMetadata", imageMetadata);
@@ -91,7 +92,7 @@ public class ObjectsDetector implements Command {
 		// Postprocess results.
 		log.info("Postprocess results.");
 		inputs = new HashMap<>();
-		inputs.put("modelURL", modelURL);
+		inputs.put("modelLocation", modelLocation);
 		inputs.put("detections", detections);
 		inputs.put("mrcnnMask", mrcnn_mask);
 		inputs.put("originalImageShape", originalImageShape);

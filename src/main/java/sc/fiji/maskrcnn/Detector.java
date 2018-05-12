@@ -7,6 +7,7 @@ import java.util.Map;
 
 import org.scijava.ItemIO;
 import org.scijava.command.Command;
+import org.scijava.io.location.Location;
 import org.scijava.plugin.Parameter;
 import org.tensorflow.Session.Runner;
 import org.tensorflow.Tensor;
@@ -29,7 +30,7 @@ public class Detector extends AbstractPredictor implements Command {
 			"output_mrcnn_bbox", "output_mrcnn_mask", "output_rois");
 
 	@Parameter
-	private String modelURL;
+	private Location modelLocation;
 	
 	@Parameter
 	private String modelName;
@@ -64,7 +65,7 @@ public class Detector extends AbstractPredictor implements Command {
 	@Override
 	public void run() {
 		
-		this.loadModel(modelURL, modelName, "model.pb");
+		this.loadModel(modelLocation, modelName, "model.pb");
 
 		// Get input nodes as tensor.
 		Map<String, Object> inputNodes = new HashMap<>(DEFAULT_INPUT_NODES);

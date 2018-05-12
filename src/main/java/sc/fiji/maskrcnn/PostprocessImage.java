@@ -7,6 +7,7 @@ import java.util.Map;
 
 import org.scijava.ItemIO;
 import org.scijava.command.Command;
+import org.scijava.io.location.Location;
 import org.scijava.plugin.Parameter;
 import org.tensorflow.Session.Runner;
 import org.tensorflow.Tensor;
@@ -31,7 +32,7 @@ public class PostprocessImage extends AbstractPredictor implements Command {
 	private static final List<String> OUTPUT_NODE_NAMES = Arrays.asList("rois", "class_ids", "scores", "masks");
 
 	@Parameter
-	private String modelURL;
+	private Location modelLocation;
 
 	@Parameter
 	private Tensor<?> detections;
@@ -66,7 +67,7 @@ public class PostprocessImage extends AbstractPredictor implements Command {
 	@Override
 	public void run() {
 
-		this.loadModel(modelURL, MODEL_NAME, MODEL_FILENAME);
+		this.loadModel(modelLocation, MODEL_NAME, MODEL_FILENAME);
 
 		// Get input nodes as tensor.
 		Map<String, Object> inputNodes = new HashMap<>(DEFAULT_INPUT_NODES);

@@ -7,6 +7,7 @@ import java.util.Map;
 
 import org.scijava.ItemIO;
 import org.scijava.command.Command;
+import org.scijava.io.location.Location;
 import org.scijava.plugin.Parameter;
 import org.tensorflow.Session.Runner;
 import org.tensorflow.Tensor;
@@ -48,7 +49,7 @@ public class PreprocessImage extends AbstractPredictor implements Command {
 			"anchors");
 
 	@Parameter
-	private String modelURL;
+	private Location modelLocation;
 
 	@Parameter
 	private Dataset inputDataset;
@@ -91,11 +92,11 @@ public class PreprocessImage extends AbstractPredictor implements Command {
 	@Override
 	public void run() {
 
-		this.classLabels = this.loadLabels(modelURL, MODEL_NAME, "labels.txt");
+		this.classLabels = this.loadLabels(modelLocation, MODEL_NAME, "labels.txt");
 		this.modelName = this.classLabels.get(0);
 		this.classLabels.remove(0);
 
-		this.loadModel(modelURL, MODEL_NAME, MODEL_FILENAME);
+		this.loadModel(modelLocation, MODEL_NAME, MODEL_FILENAME);
 
 		// Get input nodes as tensor.
 		Map<String, Object> inputNodes = this.preprocessInputs();
