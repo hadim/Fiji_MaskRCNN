@@ -15,6 +15,12 @@ import ij.gui.Roi;
 import ij.plugin.frame.RoiManager;
 import net.imagej.Dataset;
 import net.imagej.ImageJ;
+import net.imagej.table.DefaultGenericTable;
+import net.imagej.table.DefaultTableDisplay;
+import net.imagej.table.DoubleColumn;
+import net.imagej.table.GenericTable;
+import net.imagej.table.IntColumn;
+import net.imagej.table.TableDisplay;
 
 @Plugin(type = Command.class, menuPath = "Plugins>Segmentation>Detect Microtubules", headless = true)
 public class MicrotubuleDetector implements Command {
@@ -78,7 +84,8 @@ public class MicrotubuleDetector implements Command {
 		Tensor<?> masks = (Tensor<?>) module.getOutput("masks");
 
 		this.fillRoiManager(finalROIs, scores, classIds);
-		
+		this.fillTable(finalROIs, scores, classIds);
+
 		log.info("Done");
 	}
 
@@ -108,6 +115,49 @@ public class MicrotubuleDetector implements Command {
 			box.setName("BBox-" + i + "-Score-" + scoresArray[i] + "-ClassID-" + classIdsArray[i]);
 			rm.addRoi(box);
 		}
+	}
+
+	protected void fillTable(Tensor<?> rois, Tensor<?> scores, Tensor<?> classIds) {
+
+		GenericTable table = new DefaultGenericTable();
+		table.add(new IntColumn("id"));
+		table.add(new IntColumn("class_id"));
+		table.add(new DoubleColumn("score"));
+		table.add(new IntColumn("x"));
+		table.add(new IntColumn("y"));
+		table.add(new IntColumn("width"));
+		table.add(new IntColumn("height"));
+
+		int x1, y1, x2, y2;
+
+		int nRois = (int) rois.shape()[0];
+		int nCoords = (int) rois.shape()[1];
+		int[][] roisArray = rois.copyTo(new int[nRois][nCoords]);
+
+		float[] scoresArray = scores.copyTo(new float[(int) scores.shape()[0]]);
+		int[] classIdsArray = classIds.copyTo(new int[(int) classIds.shape()[0]]);
+
+		for (int i = 0; i < roisArray.length; i++) {
+			x1 = roisArray[i][0];
+			y1 = roisArray[i][1];
+			x2 = roisArray[i][2];
+			y2 = roisArray[i][3];
+
+			table.appendRow();
+			table.set("id", i, i);
+			table.set("class_id", i, classIdsArray[i]);
+			table.set("score", i, (double) scoresArray[i]);
+			table.set("x", i, y1);
+			table.set("y", i, x1);
+			table.set("width", i, y1 - y2);
+			table.set("height", i, x1 - x2);
+		}
+
+		// Display table
+		// TODO: display does not work...
+		TableDisplay disp = new DefaultTableDisplay();
+		disp.display(table);
+		disp.add(table);
 	}
 
 	public static void main(String[] args) throws IOException {
