@@ -17,6 +17,7 @@ import org.tensorflow.Tensor;
 import ij.gui.Roi;
 import ij.plugin.frame.RoiManager;
 import net.imagej.Dataset;
+import net.imagej.DatasetService;
 import net.imagej.ImageJ;
 import net.imagej.table.DefaultGenericTable;
 import net.imagej.table.DoubleColumn;
@@ -24,6 +25,8 @@ import net.imagej.table.GenericColumn;
 import net.imagej.table.GenericTable;
 import net.imagej.table.IntColumn;
 import net.imagej.tensorflow.TensorFlowService;
+import net.imglib2.img.Img;
+import net.imglib2.type.numeric.real.FloatType;
 
 @Plugin(type = Command.class, menuPath = "Plugins>Detection>Mask RCNN Detector", headless = true)
 public class ObjectsDetector implements Command {
@@ -33,6 +36,9 @@ public class ObjectsDetector implements Command {
 
 	@Parameter
 	private LogService log;
+	
+	@Parameter
+	private DatasetService ds;
 
 	@Parameter
 	private Location modelLocation;
@@ -48,6 +54,9 @@ public class ObjectsDetector implements Command {
 
 	@Parameter(type = ItemIO.OUTPUT)
 	private GenericTable table;
+	
+	@Parameter(type = ItemIO.OUTPUT)
+	private Dataset masksImage;
 
 	@Parameter
 	protected TensorFlowService tfService;
@@ -117,6 +126,9 @@ public class ObjectsDetector implements Command {
 		this.roisList = this.fillRoiManager(finalROIs, scores, classIds);
 		this.table = this.fillTable(finalROIs, scores, classIds, classLabels);
 
+		Img<FloatType> im = net.imagej.tensorflow.Tensors.imgFloat((Tensor<Float>) masks);
+		masksImage = ds.create(im);
+		
 		log.info("Done");
 	}
 

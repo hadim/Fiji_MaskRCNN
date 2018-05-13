@@ -14,7 +14,7 @@ If you build a model using this project and you think can be useful to others pl
 
 | Objects | Version | Description | URL |
 | --- | --- | --- | --- |
-| Microtubules | 1.0 | Trained with an articially generated dataset. | https://github.com/hadim/Fiji_MaskRCNN/releases/download/Fiji-MaskRCNN-0.1.0/tf_model_coco_512_new.zip
+| Microtubules | 1.0 | Trained with an articially generated dataset. | https://github.com/hadim/Fiji_MaskRCNN/releases/download/Fiji-MaskRCNN-0.2.3/tf_model_coco_512_new.zip
 
 ## Limitations
 
