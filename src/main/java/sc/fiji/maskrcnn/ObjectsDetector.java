@@ -7,7 +7,6 @@ import java.util.Map;
 
 import org.apache.commons.io.FilenameUtils;
 import org.scijava.ItemIO;
-import org.scijava.ItemVisibility;
 import org.scijava.command.Command;
 import org.scijava.io.http.HTTPLocation;
 import org.scijava.io.location.FileLocation;
@@ -35,6 +34,12 @@ import net.imglib2.type.numeric.real.FloatType;
 @Plugin(type = Command.class, menuPath = "Plugins>Detection>Mask RCNN Detector", headless = true)
 public class ObjectsDetector implements Command {
 
+	static private Map<String, String> AVAILABLE_MODELS = new HashMap<>();
+	static {
+		AVAILABLE_MODELS.put("Microtubule",
+				"https://github.com/hadim/Fiji_MaskRCNN/releases/download/Fiji_MaskRCNN-0.3.0/tf_model_coco_512_new.zip");
+	}
+
 	@Parameter
 	private ImageJ ij;
 
@@ -45,13 +50,16 @@ public class ObjectsDetector implements Command {
 	private DatasetService ds;
 
 	@Parameter(required = false)
-	private String modelURL;
+	private String modelURL = null;
 
 	@Parameter(required = false)
-	private String modelPath;
+	private String modelPath = null;
 
 	@Parameter
 	private Dataset inputDataset;
+
+	@Parameter(choices = { "Microtubule" }, required = false)
+	private String modelNameToUse = null;
 
 	@Parameter(required = false)
 	private boolean verbose = false;
@@ -78,7 +86,13 @@ public class ObjectsDetector implements Command {
 			// Get model location
 			if (modelURL == null) {
 				if (modelPath == null) {
-					throw new Exception("modelURL or modelPath needs to be provided.");
+					if (modelNameToUse == null) {
+						throw new Exception("modelURL, modelPath or modelNameToUse, needs to be provided.");
+					} else {
+						this.modelLocation = new FileLocation(AVAILABLE_MODELS.get(modelNameToUse));
+					}
+
+					throw new Exception("modelURL, modelPath or modelToUse, needs to be provided.");
 				} else {
 					this.modelLocation = new FileLocation(modelPath);
 				}

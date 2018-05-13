@@ -48,6 +48,8 @@ from sc.fiji.maskrcnn import ObjectsDetector
 modelURL = "https://github.com/hadim/Fiji_MaskRCNN/releases/download/Fiji-MaskRCNN-0.3.0/tf_model_coco_512_new.zip";
 
 inputs = {"modelURL": modelURL,
+          "odelPath": None,
+          "modelNameToUse": None,
 	      "inputDataset": data,
 	      "verbose": True}
 module = ms.waitFor(cs.run(ObjectsDetector, True, inputs))

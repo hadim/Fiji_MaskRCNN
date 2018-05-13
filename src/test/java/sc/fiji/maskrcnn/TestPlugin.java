@@ -26,6 +26,7 @@ public class TestPlugin {
 		Map<String, Object> inputs = new HashMap<>();
 		inputs.put("modelURL", null);
 		inputs.put("modelPath", modelPath);
+		inputs.put("modelNameToUse", null);
 		inputs.put("inputDataset", dataset);
 		inputs.put("verbose", true);
 		ij.command().run(ObjectsDetector.class, true, inputs);
