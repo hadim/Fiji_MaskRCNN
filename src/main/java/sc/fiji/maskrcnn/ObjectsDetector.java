@@ -147,6 +147,8 @@ public class ObjectsDetector implements Command {
 		Tensor<?> mrcnn_bbox = (Tensor<?>) module.getOutput("mrcnn_bbox");
 		Tensor<?> rois = (Tensor<?>) module.getOutput("rois");
 
+		log.info(detections.shape()[0]);
+
 		// Postprocess results.
 		log.info("Postprocess results.");
 		inputs = new HashMap<>();
@@ -164,13 +166,20 @@ public class ObjectsDetector implements Command {
 		Tensor<?> scores = (Tensor<?>) module.getOutput("scores");
 		Tensor<?> masks = (Tensor<?>) module.getOutput("masks");
 
-		this.roisList = this.fillRoiManager(finalROIs, scores, classIds);
-		this.table = this.fillTable(finalROIs, scores, classIds, classLabels);
+		if (scores.shape()[0] == 0) {
+			this.roisList = new ArrayList<Roi>();
+			this.table = new DefaultGenericTable();
+			this.masksImage = null;
+		} else {
+			this.roisList = this.fillRoiManager(finalROIs, scores, classIds);
+			this.table = this.fillTable(finalROIs, scores, classIds, classLabels);
 
-		Img<FloatType> im = net.imagej.tensorflow.Tensors.imgFloat((Tensor<Float>) masks);
-		masksImage = ds.create(im);
+			Img<FloatType> im = net.imagej.tensorflow.Tensors.imgFloat((Tensor<Float>) masks);
+			this.masksImage = ds.create(im);
+		}
 
-		log.info("Done");
+		log.info(scores.shape()[0] + " objects detected.");
+		log.info("Detection done");
 	}
 
 	protected List<Roi> fillRoiManager(Tensor<?> rois, Tensor<?> scores, Tensor<?> classIds) {

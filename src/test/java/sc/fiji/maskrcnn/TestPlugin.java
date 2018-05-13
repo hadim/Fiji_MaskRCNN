@@ -11,14 +11,16 @@ public class TestPlugin {
 
 	public static void main(String[] args) throws IOException, URISyntaxException {
 
-		final String modelURL = "https://github.com/hadim/Fiji_MaskRCNN/releases/download/Fiji_MaskRCNN-0.3.0/tf_model_coco_512_new.zip";
+		final String modelURL = "https://github.com/hadim/Fiji_MaskRCNN/releases/download/Fiji_MaskRCNN-0.3.1/tf_model_coco_512_new.zip";
 		final String modelPath = "/home/hadim/Drive/Data/Neural_Network/Mask-RCNN/Microtubules/saved_model/tf_model_coco_512_new.zip";
 
 		final ImageJ ij = new ImageJ();
 		ij.launch(args);
 
 		// Open an image and display it.
-		String imagePath = "/home/hadim/Documents/Code/Postdoc/ij/testdata/single-256x256.tif";
+		String imagePath = "/home/hadim/Documents/Code/Postdoc/ij/testdata/";
+		imagePath += "single-256x256.tif";
+		//imagePath += "Cell_Colony-1.tif";
 
 		final Object dataset = ij.io().open(imagePath);
 		ij.ui().show(dataset);

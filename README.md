@@ -45,7 +45,7 @@ Here is an example script:
 
 from sc.fiji.maskrcnn import ObjectsDetector
 
-modelURL = "https://github.com/hadim/Fiji_MaskRCNN/releases/download/Fiji-MaskRCNN-0.3.0/tf_model_coco_512_new.zip";
+modelURL = "https://github.com/hadim/Fiji_MaskRCNN/releases/download/Fiji-MaskRCNN-0.3.1/tf_model_coco_512_new.zip";
 
 inputs = {"modelURL": modelURL,
           "odelPath": None,
@@ -63,7 +63,7 @@ masks = module.getOutput("masksImage")
 
 | Objects | Version | Description | URL |
 | --- | --- | --- | --- |
-| Microtubules | 1.0 | Trained with an articially generated dataset. | https://github.com/hadim/Fiji_MaskRCNN/releases/download/Fiji_MaskRCNN-0.3.0/tf_model_coco_512_new.zip
+| Microtubules | 1.0 | Trained with an articially generated dataset. | https://github.com/hadim/Fiji_MaskRCNN/releases/download/Fiji_MaskRCNN-0.3.1/tf_model_coco_512_new.zip
 
 ## Screenshots
 
