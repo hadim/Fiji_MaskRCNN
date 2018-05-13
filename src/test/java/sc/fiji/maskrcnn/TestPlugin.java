@@ -11,7 +11,7 @@ public class TestPlugin {
 
 	public static void main(String[] args) throws IOException, URISyntaxException {
 
-		final String modelURL = "https://github.com/hadim/Fiji_MaskRCNN/releases/download/Fiji_MaskRCNN-0.3.1/tf_model_coco_512_new.zip";
+		final String modelURL = "https://github.com/hadim/Fiji_MaskRCNN/releases/download/Fiji_MaskRCNN-0.3.2/tf_model_coco_512_new.zip";
 		final String modelPath = "/home/hadim/Drive/Data/Neural_Network/Mask-RCNN/Microtubules/saved_model/tf_model_coco_512_new.zip";
 
 		final ImageJ ij = new ImageJ();

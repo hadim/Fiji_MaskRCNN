@@ -37,7 +37,7 @@ public class ObjectsDetector implements Command {
 	static private Map<String, String> AVAILABLE_MODELS = new HashMap<>();
 	static {
 		AVAILABLE_MODELS.put("Microtubule",
-				"https://github.com/hadim/Fiji_MaskRCNN/releases/download/Fiji_MaskRCNN-0.3.0/tf_model_coco_512_new.zip");
+				"https://github.com/hadim/Fiji_MaskRCNN/releases/download/Fiji_MaskRCNN-0.3.2/tf_model_coco_512_new.zip");
 	}
 
 	@Parameter
