@@ -16,6 +16,10 @@ If you build a model using this project and you think can be useful to others pl
 | --- | --- | --- | --- |
 | Microtubules | 1.0 | Trained with an articially generated dataset. | https://github.com/hadim/Fiji_MaskRCNN/releases/download/Fiji-MaskRCNN-0.2.3/tf_model_coco_512_new.zip
 
+## Screenshots
+
+![Output of the microtubule model.](./screenshot.png "Output of the microtubule model.")
+
 ## Limitations
 
 - Only work on 2D images but not stack of 2D images.
