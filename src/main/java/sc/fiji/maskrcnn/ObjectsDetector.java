@@ -1,5 +1,7 @@
 package sc.fiji.maskrcnn;
 
+import java.net.URL;
+import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -7,6 +9,8 @@ import java.util.Map;
 
 import org.scijava.ItemIO;
 import org.scijava.command.Command;
+import org.scijava.io.http.HTTPLocation;
+import org.scijava.io.location.FileLocation;
 import org.scijava.io.location.Location;
 import org.scijava.log.LogService;
 import org.scijava.module.Module;
@@ -36,12 +40,15 @@ public class ObjectsDetector implements Command {
 
 	@Parameter
 	private LogService log;
-	
+
 	@Parameter
 	private DatasetService ds;
 
-	@Parameter
-	private Location modelLocation;
+	@Parameter(required = false)
+	private URL modelURL;
+
+	@Parameter(required = false)
+	private Path modelPath;
 
 	@Parameter
 	private Dataset inputDataset;
@@ -54,19 +61,34 @@ public class ObjectsDetector implements Command {
 
 	@Parameter(type = ItemIO.OUTPUT)
 	private GenericTable table;
-	
+
 	@Parameter(type = ItemIO.OUTPUT)
 	private Dataset masksImage;
 
 	@Parameter
 	protected TensorFlowService tfService;
 
+	private Location modelLocation;
+
 	@Override
 	public void run() {
 
 		try {
+
+			// Get model location
+			if (modelURL == null) {
+				if (modelPath == null) {
+					throw new Exception("modelURL or modelPath needs to be provided.");
+				} else {
+					this.modelLocation = new FileLocation(modelPath.toFile());
+				}
+			} else {
+				this.modelLocation = new HTTPLocation(modelURL.toURI());
+			}
+
 			this.checkInput();
 			this.runPrediction();
+
 		} catch (Exception e) {
 			log.error(e);
 		}
@@ -128,7 +150,7 @@ public class ObjectsDetector implements Command {
 
 		Img<FloatType> im = net.imagej.tensorflow.Tensors.imgFloat((Tensor<Float>) masks);
 		masksImage = ds.create(im);
-		
+
 		log.info("Done");
 	}
 
@@ -207,7 +229,7 @@ public class ObjectsDetector implements Command {
 		if (this.inputDataset.numDimensions() != 2) {
 			throw new Exception("Input image must have exactly 2 dimensions (XY).");
 		}
-		
+
 		// TODO: should be setup from model parameters.
 		if (this.inputDataset.dimension(0) >= 512) {
 			throw new Exception("Width cannot be greater than 512 pixels.");

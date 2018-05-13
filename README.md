@@ -20,7 +20,7 @@ The inputs consist of:
 
 - `inputDataset`: An image (only 2D at the moment, stacks would be allowed in the future).
 
-- `modelLocation`: A model as a ZIP file (can be a filepath or an URL). The file contains:
+- `modelURL` or `modelPath`: A model as a ZIP file (can be a filepath or an URL). The file contains:
 
     - `model.pb`: The Mask RCNN graph used for object detection. 
     - `preprocessing_graph.pb`: The graph performing preprocessing on the input image.
@@ -33,11 +33,34 @@ The outputs consist of:
 - `table`: A table containing the coordinates of the bounding boxes of detected objects as well as its score and class label.
 - `masksImage`: An image mask.
 
+## Scripting
+
+Here is an example script:
+
+```python
+# @Dataset data
+# @CommandService cs
+# @ModuleService ms
+
+from sc.fiji.maskrcnn import ObjectsDetector
+
+modelURL = "https://github.com/hadim/Fiji_MaskRCNN/releases/download/Fiji-MaskRCNN-0.2.3/tf_model_coco_512_new.zip";
+
+inputs = {"modelURL": modelURL,
+	      "inputDataset": data,
+	      "verbose": True}
+module = ms.waitFor(cs.run(ObjectsDetector, True, inputs))
+
+rois = module.getOutput("roisList")
+table = module.getOutput("table")
+masks = module.getOutput("masksImage")
+```
+
 ## Available Models
 
 | Objects | Version | Description | URL |
 | --- | --- | --- | --- |
-| Microtubules | 1.0 | Trained with an articially generated dataset. | https://github.com/hadim/Fiji_MaskRCNN/releases/download/Fiji-MaskRCNN-0.2.3/tf_model_coco_512_new.zip
+| Microtubules | 1.0 | Trained with an articially generated dataset. | https://github.com/hadim/Fiji_MaskRCNN/releases/download/Fiji_MaskRCNN-0.2.3/tf_model_coco_512_new.zip
 
 ## Screenshots
 
