@@ -1,5 +1,9 @@
 package sc.fiji.maskrcnn;
 
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.IOException;
+import java.io.InputStream;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
@@ -11,6 +15,7 @@ import org.scijava.io.location.Location;
 import org.scijava.plugin.Parameter;
 import org.tensorflow.Session.Runner;
 import org.tensorflow.Tensor;
+import org.yaml.snakeyaml.Yaml;
 
 import net.imagej.Dataset;
 import net.imagej.DatasetService;
@@ -21,35 +26,16 @@ import net.imglib2.type.numeric.real.FloatType;
 
 public class PreprocessImage extends AbstractPredictor implements Command {
 
-	private static final String MODEL_NAME = "default";
 	private static final String MODEL_FILENAME = "preprocessing_graph.pb";
-
-	// Specific parameters.
-	// TODO: Ideally those parameters would be automatically read from the ZIP file.
-	// A YAML file would be ideal as a file format for this kind of parameters.
-	private static final Map<String, Object> DEFAULT_INPUT_NODES = new HashMap<String, Object>() {
-		private static final long serialVersionUID = 1L;
-		{
-			put("input_image", null);
-			put("original_image_height", null);
-			put("original_image_width", null);
-			put("image_min_dimension", 10);
-			put("image_max_dimension", 512);
-			put("minimum_scale", 1.0f);
-			put("mean_pixels", new float[] { 123.7f, 116.8f, 103.9f });
-			put("class_ids", null);
-			put("backbone_strides", new int[] { 4, 8, 16, 32, 64 });
-			put("rpn_anchor_scales", new int[] { 8, 16, 32, 64, 128 });
-			put("rpn_anchor_ratios", new float[] { 0.5f, 1f, 2f });
-			put("rpn_anchor_stride", 1);
-		}
-	};
 
 	private static final List<String> OUTPUT_NODE_NAMES = Arrays.asList("molded_image", "image_metadata", "window",
 			"anchors");
 
 	@Parameter
 	private Location modelLocation;
+
+	@Parameter
+	private String modelName;
 
 	@Parameter
 	private Dataset inputDataset;
@@ -78,33 +64,29 @@ public class PreprocessImage extends AbstractPredictor implements Command {
 	@Parameter(type = ItemIO.OUTPUT)
 	private List<String> classLabels;
 
-	@Parameter(type = ItemIO.OUTPUT)
-	private String modelName;
-
 	@Parameter
 	private OpService op;
 
 	@Parameter
 	private DatasetService ds;
 
+	@Parameter
+	private CustomDownloadService cds;
+
 	private Tensor<Float> inputTensorImage = null;
 
 	@Override
 	public void run() {
 
-		this.classLabels = this.loadLabels(modelLocation, MODEL_NAME, "labels.txt");
-		this.modelName = this.classLabels.get(0);
-		this.classLabels.remove(0);
-
-		this.loadModel(modelLocation, MODEL_NAME, MODEL_FILENAME);
+		this.loadModel(modelLocation, modelName, MODEL_FILENAME);
 
 		// Get input nodes as tensor.
-		Map<String, Object> inputNodes = this.preprocessInputs();
+		Map<String, Tensor<?>> inputNodes = this.preprocessInputs();
 
 		// Setup the runner with input and output nodes.
 		Runner runner = this.session.runner();
-		for (Map.Entry<String, Object> entry : inputNodes.entrySet()) {
-			runner = runner.feed(entry.getKey(), (Tensor<?>) entry.getValue());
+		for (Map.Entry<String, Tensor<?>> entry : inputNodes.entrySet()) {
+			runner = runner.feed(entry.getKey(), entry.getValue());
 		}
 
 		for (String outputName : OUTPUT_NODE_NAMES) {
@@ -139,45 +121,60 @@ public class PreprocessImage extends AbstractPredictor implements Command {
 		this.clear();
 	}
 
-	private Map<String, Object> preprocessInputs() {
-		// Compute input values
-		Map<String, Object> inputNodes = new HashMap<>(DEFAULT_INPUT_NODES);
+	private Map<String, Tensor<?>> preprocessInputs() {
 
-		this.inputTensorImage = Tensors.tensorFloat(
-				(RandomAccessibleInterval<FloatType>) op.run("convert.float32", inputDataset.getImgPlus()));
-		inputNodes.put("input_image", this.inputTensorImage);
+		// Load parameters from YAML file
+		try {
+			File parametersFile = cds.loadFile(modelLocation, modelName, "parameters.yml");
 
-		inputNodes.put("original_image_height", ((Long) this.inputTensorImage.shape()[0]).intValue());
-		inputNodes.put("original_image_width", ((Long) this.inputTensorImage.shape()[1]).intValue());
+			InputStream input = new FileInputStream(parametersFile);
+			Yaml yaml = new Yaml();
+			Map data = (Map) yaml.load(input);
 
-		int[] classIDs = new int[this.classLabels.size()];
-		for (int i = 0; i < this.classLabels.size(); i++) {
-			classIDs[i] = 0;
+			this.classLabels = (List<String>) data.get("class_names");
+
+			// Compute input values
+			Map<String, Tensor<?>> inputNodes = new HashMap<>();
+
+			this.inputTensorImage = Tensors.tensorFloat(
+					(RandomAccessibleInterval<FloatType>) op.run("convert.float32", inputDataset.getImgPlus()));
+			inputNodes.put("input_image", this.inputTensorImage);
+
+			inputNodes.put("original_image_height",
+					org.tensorflow.Tensors.create(((Long) this.inputTensorImage.shape()[0]).intValue()));
+			inputNodes.put("original_image_width",
+					org.tensorflow.Tensors.create(((Long) this.inputTensorImage.shape()[1]).intValue()));
+
+			int[] class_ids = Utils.listDoubleToIntArray((List) data.get("class_ids"));
+			inputNodes.put("class_ids", org.tensorflow.Tensors.create(class_ids));
+
+			inputNodes.put("image_min_dimension", org.tensorflow.Tensors.create((int) data.get("image_min_dimension")));
+			inputNodes.put("image_max_dimension", org.tensorflow.Tensors.create((int) data.get("image_max_dimension")));
+
+			inputNodes.put("minimum_scale",
+					org.tensorflow.Tensors.create(((Double) data.get("minimum_scale")).floatValue()));
+
+			float[] mean_pixels = Utils.listDoubleToFloatArray((List) data.get("mean_pixels"));
+			inputNodes.put("mean_pixels", org.tensorflow.Tensors.create(mean_pixels));
+
+			int[] backbone_strides = Utils.listIntegerToIntArray((List) data.get("backbone_strides"));
+			inputNodes.put("backbone_strides", org.tensorflow.Tensors.create(backbone_strides));
+
+			int[] rpn_anchor_scales = Utils.listIntegerToIntArray((List) data.get("rpn_anchor_scales"));
+			inputNodes.put("rpn_anchor_scales", org.tensorflow.Tensors.create(rpn_anchor_scales));
+
+			float[] rpn_anchor_ratios = Utils.listDoubleToFloatArray((List) data.get("rpn_anchor_ratios"));
+			inputNodes.put("rpn_anchor_ratios", org.tensorflow.Tensors.create(rpn_anchor_ratios));
+
+			inputNodes.put("rpn_anchor_stride", org.tensorflow.Tensors.create((int) data.get("rpn_anchor_stride")));
+
+			return inputNodes;
+
+		} catch (IOException e) {
+			log.error("Can't read parameters.yml in the ZIP model file: " + e);
+			return null;
 		}
-		inputNodes.put("class_ids", classIDs);
 
-		// Convert inputs to tensors
-		inputNodes.put("original_image_height",
-				org.tensorflow.Tensors.create((int) inputNodes.get("original_image_height")));
-		inputNodes.put("original_image_width",
-				org.tensorflow.Tensors.create((int) inputNodes.get("original_image_width")));
-
-		inputNodes.put("image_min_dimension",
-				org.tensorflow.Tensors.create((int) inputNodes.get("image_min_dimension")));
-		inputNodes.put("image_max_dimension",
-				org.tensorflow.Tensors.create((int) inputNodes.get("image_max_dimension")));
-
-		inputNodes.put("minimum_scale", org.tensorflow.Tensors.create((float) inputNodes.get("minimum_scale")));
-		inputNodes.put("mean_pixels", org.tensorflow.Tensors.create((float[]) inputNodes.get("mean_pixels")));
-		inputNodes.put("class_ids", org.tensorflow.Tensors.create((int[]) inputNodes.get("class_ids")));
-
-		inputNodes.put("backbone_strides", org.tensorflow.Tensors.create((int[]) inputNodes.get("backbone_strides")));
-		inputNodes.put("rpn_anchor_scales", org.tensorflow.Tensors.create((int[]) inputNodes.get("rpn_anchor_scales")));
-		inputNodes.put("rpn_anchor_ratios",
-				org.tensorflow.Tensors.create((float[]) inputNodes.get("rpn_anchor_ratios")));
-		inputNodes.put("rpn_anchor_stride", org.tensorflow.Tensors.create((int) inputNodes.get("rpn_anchor_stride")));
-
-		return inputNodes;
 	}
 
 }

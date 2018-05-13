@@ -14,7 +14,6 @@ import org.tensorflow.Tensor;
 
 public class PostprocessImage extends AbstractPredictor implements Command {
 
-	private static final String MODEL_NAME = "default";
 	private static final String MODEL_FILENAME = "postprocessing_graph.pb";
 
 	// Specific parameters.
@@ -33,6 +32,9 @@ public class PostprocessImage extends AbstractPredictor implements Command {
 
 	@Parameter
 	private Location modelLocation;
+	
+	@Parameter
+	private String modelName;
 
 	@Parameter
 	private Tensor<?> detections;
@@ -67,7 +69,7 @@ public class PostprocessImage extends AbstractPredictor implements Command {
 	@Override
 	public void run() {
 
-		this.loadModel(modelLocation, MODEL_NAME, MODEL_FILENAME);
+		this.loadModel(modelLocation, modelName, MODEL_FILENAME);
 
 		// Get input nodes as tensor.
 		Map<String, Object> inputNodes = new HashMap<>(DEFAULT_INPUT_NODES);

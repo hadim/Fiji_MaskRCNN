@@ -23,7 +23,6 @@ public abstract class AbstractPredictor {
 	protected Session session;
 
 	protected void loadModel(Location modelLocation, String modelName, String modelFilename) {
-
 		try {
 			this.graph = tfService.loadGraph(modelLocation, modelName, modelFilename);
 			this.session = new Session(this.graph);

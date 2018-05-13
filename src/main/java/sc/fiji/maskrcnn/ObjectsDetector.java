@@ -1,13 +1,13 @@
 package sc.fiji.maskrcnn;
 
-import java.net.URL;
-import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import org.apache.commons.io.FilenameUtils;
 import org.scijava.ItemIO;
+import org.scijava.ItemVisibility;
 import org.scijava.command.Command;
 import org.scijava.io.http.HTTPLocation;
 import org.scijava.io.location.FileLocation;
@@ -45,10 +45,10 @@ public class ObjectsDetector implements Command {
 	private DatasetService ds;
 
 	@Parameter(required = false)
-	private URL modelURL;
+	private String modelURL;
 
 	@Parameter(required = false)
-	private Path modelPath;
+	private String modelPath;
 
 	@Parameter
 	private Dataset inputDataset;
@@ -80,10 +80,10 @@ public class ObjectsDetector implements Command {
 				if (modelPath == null) {
 					throw new Exception("modelURL or modelPath needs to be provided.");
 				} else {
-					this.modelLocation = new FileLocation(modelPath.toFile());
+					this.modelLocation = new FileLocation(modelPath);
 				}
 			} else {
-				this.modelLocation = new HTTPLocation(modelURL.toURI());
+				this.modelLocation = new HTTPLocation(modelURL);
 			}
 
 			this.checkInput();
@@ -95,12 +95,17 @@ public class ObjectsDetector implements Command {
 	}
 
 	private void runPrediction() {
+
+		// This name is only used for caching the model ZIP file on disk.
+		String modelName = FilenameUtils.getBaseName(modelLocation.getURI().toString());
+
 		Module module;
 
 		// Preprocess the image.
 		log.info("Preprocess image.");
 		Map<String, Object> inputs = new HashMap<>();
 		inputs.put("modelLocation", modelLocation);
+		inputs.put("modelName", modelName);
 		inputs.put("inputDataset", inputDataset);
 		inputs.put("verbose", verbose);
 		module = ij.module().waitFor(ij.command().run(PreprocessImage.class, true, inputs));
@@ -111,7 +116,6 @@ public class ObjectsDetector implements Command {
 		Tensor<?> originalImageShape = (Tensor<?>) module.getOutput("originalImageShape");
 		Tensor<?> imageShape = (Tensor<?>) module.getOutput("imageShape");
 		List<String> classLabels = (List<String>) module.getOutput("classLabels");
-		String modelName = (String) module.getOutput("modelName");
 
 		// Detect objects.
 		log.info("Run detection.");
@@ -133,6 +137,7 @@ public class ObjectsDetector implements Command {
 		log.info("Postprocess results.");
 		inputs = new HashMap<>();
 		inputs.put("modelLocation", modelLocation);
+		inputs.put("modelName", modelName);
 		inputs.put("detections", detections);
 		inputs.put("mrcnnMask", mrcnn_mask);
 		inputs.put("originalImageShape", originalImageShape);
@@ -231,10 +236,10 @@ public class ObjectsDetector implements Command {
 		}
 
 		// TODO: should be setup from model parameters.
-		if (this.inputDataset.dimension(0) >= 512) {
+		if (this.inputDataset.dimension(0) > 512) {
 			throw new Exception("Width cannot be greater than 512 pixels.");
 		}
-		if (this.inputDataset.dimension(1) >= 512) {
+		if (this.inputDataset.dimension(1) > 512) {
 			throw new Exception("Height cannot be greater than 512 pixels.");
 		}
 	}
