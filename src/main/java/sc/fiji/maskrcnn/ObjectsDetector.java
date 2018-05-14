@@ -30,6 +30,9 @@ import ij.plugin.frame.RoiManager;
 import net.imagej.Dataset;
 import net.imagej.DatasetService;
 import net.imagej.ImageJ;
+import net.imagej.ImgPlus;
+import net.imagej.axis.Axes;
+import net.imagej.axis.AxisType;
 import net.imagej.ops.OpService;
 import net.imagej.table.DefaultGenericTable;
 import net.imagej.table.DoubleColumn;
@@ -40,6 +43,7 @@ import net.imagej.tensorflow.TensorFlowService;
 import net.imglib2.RandomAccessibleInterval;
 import net.imglib2.img.Img;
 import net.imglib2.type.numeric.RealType;
+import net.imglib2.view.Views;
 
 @Plugin(type = Command.class, menuPath = "Plugins>Detection>Mask RCNN Detector", headless = true)
 public class ObjectsDetector implements Command {
@@ -349,7 +353,7 @@ public class ObjectsDetector implements Command {
 				x2 = roisArray[i][2];
 				y2 = roisArray[i][3];
 				box = new Roi(y1, x1, y2 - y1, x2 - x1);
-				box.setPosition(n + 1);
+				box.setPosition(id + 1);
 				box.setName("BBox-" + id + "-Score-" + scoresArray[i] + "-ClassID-" + classIdsArray[i] + "-Frame-" + n);
 				rm.addRoi(box);
 				roisList.add(box);
@@ -409,27 +413,31 @@ public class ObjectsDetector implements Command {
 		return table;
 	}
 
-	private <T extends RealType<?>> Dataset createMaskImage(List<Tensor<?>> masks) {
+	private <T extends RealType<T>> Dataset createMaskImage(List<Tensor<?>> masks) {
 
-		List<Img<T>> maskList = new ArrayList<>();
-		for (Tensor<?> mask : masks) {
-			maskList.add((Img<T>) net.imagej.tensorflow.Tensors.imgFloat((Tensor<Float>) mask));
+		RandomAccessibleInterval<T> im;
+		
+
+		if (masks.size() == 1) {
+			im = (RandomAccessibleInterval<T>) net.imagej.tensorflow.Tensors.imgFloat((Tensor<Float>) masks.get(0));
+		} else {
+
+			List<RandomAccessibleInterval<T>> maskList = new ArrayList<>();
+			RandomAccessibleInterval<T> singleIm;
+			
+			for (Tensor<?> mask : masks) {
+				singleIm = (RandomAccessibleInterval<T>) net.imagej.tensorflow.Tensors.imgFloat((Tensor<Float>) mask);
+				for (int i = 0; i < mask.shape()[0]; i++) {
+					maskList.add((RandomAccessibleInterval<T>) ops.transform().hyperSliceView(singleIm, 2, i));
+				}
+			}
+			im = Views.stack(maskList);
 		}
 
-		/*
-		 * RandomAccessibleInterval<T> im = Views.stack(maskList); ds.create(im);
-		 * 
-		 * AxisType[] axisTypes = new AxisType[] { Axes.X, Axes.Y, Axes.CHANNEL,
-		 * Axes.TIME }; ImgPlus imgPlus = new ImgPlus(ds.create(im), "image",
-		 * axisTypes);
-		 * 
-		 * log.info(imgPlus.numDimensions()); log.info(imgPlus.dimension(0));
-		 * log.info(imgPlus.dimension(1)); log.info(imgPlus.dimension(2));
-		 * log.info(imgPlus.dimension(3));
-		 * 
-		 * return ds.create(imgPlus);
-		 */
-		return null;
+		AxisType[] axisTypes = new AxisType[] { Axes.X, Axes.Y, Axes.TIME };
+		String maskName = "Masks of " + this.inputDataset.getName();
+		ImgPlus<T> imgPlus = new ImgPlus(ds.create(im), maskName, axisTypes);
+		return ds.create(imgPlus);
 	}
 
 	public void checkInput() throws Exception {
