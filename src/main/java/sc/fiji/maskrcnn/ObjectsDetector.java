@@ -257,11 +257,11 @@ public class ObjectsDetector implements Command {
 			this.table = new DefaultGenericTable();
 			this.masksImage = null;
 		} else {
+			this.masksImage = this.createMaskImage(postprocessOutputsMap.get("masks"));
 			this.roisList = this.fillRoiManager(postprocessOutputsMap.get("rois"), postprocessOutputsMap.get("scores"),
 					postprocessOutputsMap.get("class_ids"));
 			this.table = this.fillTable(postprocessOutputsMap.get("rois"), postprocessOutputsMap.get("scores"),
 					postprocessOutputsMap.get("class_ids"), classLabels);
-			this.masksImage = this.createMaskImage(postprocessOutputsMap.get("masks"));
 		}
 
 		log.info(nDetectedObjects + " objects detected.");
@@ -352,6 +352,8 @@ public class ObjectsDetector implements Command {
 				x2 = roisArray[i][2];
 				y2 = roisArray[i][3];
 				box = new Roi(y1, x1, y2 - y1, x2 - x1);
+				// TODO: setPosition does not work properly. In short all position greater than the 
+				// input image number of frames are set to 0 (probably because the active image is this one).
 				box.setPosition(id + 1);
 				box.setName("BBox-" + id + "-Score-" + scoresArray[i] + "-ClassID-" + classIdsArray[i] + "-Frame-" + n);
 				rm.addRoi(box);
