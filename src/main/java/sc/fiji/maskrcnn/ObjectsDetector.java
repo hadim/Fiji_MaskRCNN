@@ -13,11 +13,13 @@ import org.apache.commons.io.FilenameUtils;
 import org.scijava.ItemIO;
 import org.scijava.app.StatusService;
 import org.scijava.command.Command;
+import org.scijava.command.CommandInfo;
 import org.scijava.io.http.HTTPLocation;
 import org.scijava.io.location.FileLocation;
 import org.scijava.io.location.Location;
 import org.scijava.log.LogService;
 import org.scijava.module.Module;
+import org.scijava.module.process.PreprocessorPlugin;
 import org.scijava.plugin.Parameter;
 import org.scijava.plugin.Plugin;
 import org.tensorflow.Tensor;
@@ -119,6 +121,12 @@ public class ObjectsDetector implements Command {
 				this.modelLocation = new HTTPLocation(modelURL);
 			}
 
+			// Get a name used for caching the model.
+			this.modelnameCache = FilenameUtils.getBaseName(modelLocation.getURI().toString());
+
+			// Load the ZIP model file to access the parameters.
+			this.loadParameters();
+
 			this.checkInput();
 			this.runPrediction();
 
@@ -128,11 +136,6 @@ public class ObjectsDetector implements Command {
 	}
 
 	private void runPrediction() {
-
-		this.modelnameCache = FilenameUtils.getBaseName(modelLocation.getURI().toString());
-
-		// Load the ZIP model file to access the parameters.
-		this.loadParameters();
 
 		// How many images to process ?
 		long nImages;
@@ -277,7 +280,12 @@ public class ObjectsDetector implements Command {
 		inputs.put("modelLocation", this.modelLocation);
 		inputs.put("modelName", this.modelnameCache);
 		inputs.put("inputDataset", data);
-		Module module = ij.module().waitFor(ij.command().run(PreprocessImage.class, true, inputs));
+		inputs.put("clearModel", false);
+
+		// Disable postprocessing of the SciJava command.
+		CommandInfo command = ij.command().getCommand(PreprocessImage.class);
+		List<PreprocessorPlugin> pre = ij.plugin().createInstancesOfType(PreprocessorPlugin.class);
+		Module module = ij.module().waitFor(ij.module().run(command, pre, null, inputs));
 		return module;
 	}
 
@@ -288,7 +296,12 @@ public class ObjectsDetector implements Command {
 		inputs.put("moldedImage", moldedImage);
 		inputs.put("imageMetadata", imageMetadata);
 		inputs.put("anchors", anchors);
-		Module module = ij.module().waitFor(ij.command().run(Detector.class, true, inputs));
+		inputs.put("clearModel", false);
+
+		// Disable postprocessing of the SciJava command.
+		CommandInfo command = ij.command().getCommand(Detector.class);
+		List<PreprocessorPlugin> pre = ij.plugin().createInstancesOfType(PreprocessorPlugin.class);
+		Module module = ij.module().waitFor(ij.module().run(command, pre, null, inputs));
 		return module;
 	}
 
@@ -302,7 +315,12 @@ public class ObjectsDetector implements Command {
 		inputs.put("originalImageShape", originalImageShape);
 		inputs.put("imageShape", imageShape);
 		inputs.put("window", windows);
-		Module module = ij.module().waitFor(ij.command().run(PostprocessImage.class, true, inputs));
+		inputs.put("clearModel", false);
+
+		// Disable postprocessing of the SciJava command.
+		CommandInfo command = ij.command().getCommand(PostprocessImage.class);
+		List<PreprocessorPlugin> pre = ij.plugin().createInstancesOfType(PreprocessorPlugin.class);
+		Module module = ij.module().waitFor(ij.module().run(command, pre, null, inputs));
 		return module;
 	}
 
@@ -419,7 +437,7 @@ public class ObjectsDetector implements Command {
 			throw new Exception("Input image must have 2 or 3 dimensions.");
 		}
 
-		long maxSize = (long) this.parameters.get("image_max_dimension");
+		int maxSize = (int) this.parameters.get("image_max_dimension");
 		if (this.inputDataset.dimension(0) > maxSize) {
 			throw new Exception("Width cannot be greater than " + maxSize + " pixels.");
 		}

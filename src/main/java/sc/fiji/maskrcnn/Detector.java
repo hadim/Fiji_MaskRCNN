@@ -9,9 +9,11 @@ import org.scijava.ItemIO;
 import org.scijava.command.Command;
 import org.scijava.io.location.Location;
 import org.scijava.plugin.Parameter;
+import org.scijava.plugin.Plugin;
 import org.tensorflow.Session.Runner;
 import org.tensorflow.Tensor;
 
+@Plugin(type = Command.class, headless = true)
 public class Detector extends AbstractPredictor implements Command {
 
 	private static final String MODEL_FILENAME = "model.pb";
@@ -43,6 +45,9 @@ public class Detector extends AbstractPredictor implements Command {
 
 	@Parameter
 	private Tensor<?> anchors;
+
+	@Parameter(required = false)
+	private boolean clearModel = false;
 
 	@Parameter(type = ItemIO.OUTPUT)
 	private Tensor<?> detections;
@@ -102,6 +107,8 @@ public class Detector extends AbstractPredictor implements Command {
 		log.debug("mrcnn_mask : " + mrcnn_mask);
 		log.debug("rois : " + rois);
 
-		this.clear();
+		if (clearModel) {
+			this.clear();
+		}
 	}
 }

@@ -9,9 +9,11 @@ import org.scijava.ItemIO;
 import org.scijava.command.Command;
 import org.scijava.io.location.Location;
 import org.scijava.plugin.Parameter;
+import org.scijava.plugin.Plugin;
 import org.tensorflow.Session.Runner;
 import org.tensorflow.Tensor;
 
+@Plugin(type = Command.class, headless = true)
 public class PostprocessImage extends AbstractPredictor implements Command {
 
 	private static final String MODEL_FILENAME = "postprocessing_graph.pb";
@@ -50,6 +52,9 @@ public class PostprocessImage extends AbstractPredictor implements Command {
 
 	@Parameter
 	private Tensor<?> window;
+
+	@Parameter(required = false)
+	private boolean clearModel = false;
 
 	@Parameter(type = ItemIO.OUTPUT)
 	private Tensor<?> rois;
@@ -101,7 +106,9 @@ public class PostprocessImage extends AbstractPredictor implements Command {
 		log.debug("scores : " + scores);
 		log.debug("masks : " + masks);
 
-		this.clear();
+		if (clearModel) {
+			this.clear();
+		}
 	}
 
 }

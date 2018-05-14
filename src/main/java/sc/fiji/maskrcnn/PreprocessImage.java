@@ -13,6 +13,7 @@ import org.scijava.ItemIO;
 import org.scijava.command.Command;
 import org.scijava.io.location.Location;
 import org.scijava.plugin.Parameter;
+import org.scijava.plugin.Plugin;
 import org.tensorflow.Session.Runner;
 import org.tensorflow.Tensor;
 import org.yaml.snakeyaml.Yaml;
@@ -24,6 +25,7 @@ import net.imagej.tensorflow.Tensors;
 import net.imglib2.RandomAccessibleInterval;
 import net.imglib2.type.numeric.real.FloatType;
 
+@Plugin(type = Command.class, headless = true)
 public class PreprocessImage extends AbstractPredictor implements Command {
 
 	private static final String MODEL_FILENAME = "preprocessing_graph.pb";
@@ -39,6 +41,9 @@ public class PreprocessImage extends AbstractPredictor implements Command {
 
 	@Parameter
 	private Dataset inputDataset;
+
+	@Parameter(required = false)
+	private boolean clearModel = false;
 
 	@Parameter(type = ItemIO.OUTPUT)
 	private Tensor<?> moldedImage;
@@ -113,7 +118,9 @@ public class PreprocessImage extends AbstractPredictor implements Command {
 		log.debug("originalImageShape : " + originalImageShape);
 		log.debug("imageShape : " + imageShape);
 
-		this.clear();
+		if (clearModel) {
+			this.clear();
+		}
 	}
 
 	private Map<String, Tensor<?>> preprocessInputs() {

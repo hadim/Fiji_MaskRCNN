@@ -19,8 +19,8 @@ public class TestPlugin {
 
 		// Open an image and display it.
 		String imagePath = "/home/hadim/Documents/Code/Postdoc/ij/testdata/";
-		imagePath += "single-256x256.tif";
-		// imagePath += "test-tracking-2-frames.tif";
+		// imagePath += "single-256x256.tif";
+		imagePath += "test-tracking-2-frames.tif";
 		// imagePath += "Cell_Colony-1.tif";
 
 		final Object dataset = ij.io().open(imagePath);
