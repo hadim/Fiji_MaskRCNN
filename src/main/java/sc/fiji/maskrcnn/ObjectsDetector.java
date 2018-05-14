@@ -208,8 +208,7 @@ public class ObjectsDetector implements Command {
 	}
 
 	protected List<Roi> fillRoiManager(Tensor<?> rois, Tensor<?> scores, Tensor<?> classIds) {
-		// Add ROI of detected objects to RoiManager
-		// TODO: add resizing masks step and output them as polygon.
+		// TODO: output masks as polygons ? (need a marching cube-like algorithm.)
 
 		RoiManager rm = RoiManager.getRoiManager();
 		rm.reset();
