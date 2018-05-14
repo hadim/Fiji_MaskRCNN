@@ -7,6 +7,7 @@ import java.util.Map;
 
 import org.apache.commons.io.FilenameUtils;
 import org.scijava.ItemIO;
+import org.scijava.app.StatusService;
 import org.scijava.command.Command;
 import org.scijava.io.http.HTTPLocation;
 import org.scijava.io.location.FileLocation;
@@ -48,6 +49,9 @@ public class ObjectsDetector implements Command {
 
 	@Parameter
 	private DatasetService ds;
+	
+	@Parameter
+	private StatusService ss;
 
 	@Parameter(required = false)
 	private String modelURL = null;
@@ -121,6 +125,7 @@ public class ObjectsDetector implements Command {
 
 		// Preprocess the image.
 		log.info("Preprocessing image...");
+		ss.showStatus(0, 100, "Preprocessing image.");
 		startTime = System.currentTimeMillis();
 		Map<String, Object> inputs = new HashMap<>();
 		inputs.put("modelLocation", modelLocation);
@@ -142,6 +147,7 @@ public class ObjectsDetector implements Command {
 
 		// Detect objects.
 		log.info("Running detection...");
+		ss.showStatus(33, 100, "Running detection.");
 		startTime = System.currentTimeMillis();
 		inputs = new HashMap<>();
 		inputs.put("modelLocation", modelLocation);
@@ -163,6 +169,7 @@ public class ObjectsDetector implements Command {
 
 		// Postprocess results.
 		log.info("Postprocessing results...");
+		ss.showStatus(66, 100, "Postprocessing results.");
 		startTime = System.currentTimeMillis();
 		inputs = new HashMap<>();
 		inputs.put("modelLocation", modelLocation);
@@ -196,6 +203,7 @@ public class ObjectsDetector implements Command {
 		}
 
 		log.info(scores.shape()[0] + " objects detected.");
+		ss.showStatus(100, 100, "Done.");
 		log.info("Detection done");
 	}
 
