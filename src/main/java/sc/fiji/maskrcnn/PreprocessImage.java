@@ -40,9 +40,6 @@ public class PreprocessImage extends AbstractPredictor implements Command {
 	@Parameter
 	private Dataset inputDataset;
 
-	@Parameter(required = false)
-	private boolean verbose = false;
-
 	@Parameter(type = ItemIO.OUTPUT)
 	private Tensor<?> moldedImage;
 
@@ -109,14 +106,12 @@ public class PreprocessImage extends AbstractPredictor implements Command {
 		originalImageShape = org.tensorflow.Tensors.create(originalImageShapeArray);
 		imageShape = org.tensorflow.Tensors.create(moldedImage.shape());
 
-		if (verbose) {
-			log.info("moldedImage : " + moldedImage);
-			log.info("imageMetadata : " + imageMetadata);
-			log.info("windows : " + windows);
-			log.info("anchors : " + anchors);
-			log.info("originalImageShape : " + originalImageShape);
-			log.info("imageShape : " + imageShape);
-		}
+		log.debug("moldedImage : " + moldedImage);
+		log.debug("imageMetadata : " + imageMetadata);
+		log.debug("windows : " + windows);
+		log.debug("anchors : " + anchors);
+		log.debug("originalImageShape : " + originalImageShape);
+		log.debug("imageShape : " + imageShape);
 
 		this.clear();
 	}

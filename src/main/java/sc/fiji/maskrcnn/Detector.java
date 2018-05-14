@@ -31,7 +31,7 @@ public class Detector extends AbstractPredictor implements Command {
 
 	@Parameter
 	private Location modelLocation;
-	
+
 	@Parameter
 	private String modelName;
 
@@ -43,9 +43,6 @@ public class Detector extends AbstractPredictor implements Command {
 
 	@Parameter
 	private Tensor<?> anchors;
-
-	@Parameter(required = false)
-	private boolean verbose = false;
 
 	@Parameter(type = ItemIO.OUTPUT)
 	private Tensor<?> detections;
@@ -64,7 +61,7 @@ public class Detector extends AbstractPredictor implements Command {
 
 	@Override
 	public void run() {
-		
+
 		this.loadModel(modelLocation, modelName, "model.pb");
 
 		// Get input nodes as tensor.
@@ -99,13 +96,11 @@ public class Detector extends AbstractPredictor implements Command {
 		mrcnn_mask = outputsList.get(3);
 		rois = outputsList.get(4);
 
-		if (verbose) {
-			log.info("detections : " + detections);
-			log.info("mrcnn_class : " + mrcnn_class);
-			log.info("mrcnn_bbox : " + mrcnn_bbox);
-			log.info("mrcnn_mask : " + mrcnn_mask);
-			log.info("rois : " + rois);
-		}
+		log.debug("detections : " + detections);
+		log.debug("mrcnn_class : " + mrcnn_class);
+		log.debug("mrcnn_bbox : " + mrcnn_bbox);
+		log.debug("mrcnn_mask : " + mrcnn_mask);
+		log.debug("rois : " + rois);
 
 		this.clear();
 	}

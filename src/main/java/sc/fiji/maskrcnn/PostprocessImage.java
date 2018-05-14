@@ -32,7 +32,7 @@ public class PostprocessImage extends AbstractPredictor implements Command {
 
 	@Parameter
 	private Location modelLocation;
-	
+
 	@Parameter
 	private String modelName;
 
@@ -50,9 +50,6 @@ public class PostprocessImage extends AbstractPredictor implements Command {
 
 	@Parameter
 	private Tensor<?> window;
-
-	@Parameter(required = false)
-	private boolean verbose = false;
 
 	@Parameter(type = ItemIO.OUTPUT)
 	private Tensor<?> rois;
@@ -99,12 +96,10 @@ public class PostprocessImage extends AbstractPredictor implements Command {
 		scores = outputsList.get(2);
 		masks = outputsList.get(3);
 
-		if (verbose) {
-			log.info("rois : " + rois);
-			log.info("class_ids : " + class_ids);
-			log.info("scores : " + scores);
-			log.info("masks : " + masks);
-		}
+		log.debug("rois : " + rois);
+		log.debug("class_ids : " + class_ids);
+		log.debug("scores : " + scores);
+		log.debug("masks : " + masks);
 
 		this.clear();
 	}

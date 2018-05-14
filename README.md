@@ -12,7 +12,7 @@ If you build a model using this project and you think can be useful to others pl
 
 - [Download the latest JAR here](http://maven.imagej.net/service/local/artifact/maven/redirect?r=releases&g=org.scijava&a=Fiji_MaskRCNN&v=LATEST&e=jar).
 - Copy it in the `jars/` folder of your Fiji installation.
-- Open an image (only 2D at the moment).
+- Open an image (2D or 3D).
 - Run the plugin with `Plugins > Detection > Mask RCNN Detector`.
 
 ## How it works
@@ -50,8 +50,7 @@ modelURL = "https://github.com/hadim/Fiji_MaskRCNN/releases/download/Fiji-MaskRC
 inputs = {"modelURL": modelURL,
           "odelPath": None,
           "modelNameToUse": None,
-	      "inputDataset": data,
-	      "verbose": True}
+	      "inputDataset": data}
 module = ms.waitFor(cs.run(ObjectsDetector, True, inputs))
 
 rois = module.getOutput("roisList")

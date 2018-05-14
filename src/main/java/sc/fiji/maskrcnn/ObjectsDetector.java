@@ -16,6 +16,7 @@ import org.scijava.log.LogService;
 import org.scijava.module.Module;
 import org.scijava.plugin.Parameter;
 import org.scijava.plugin.Plugin;
+import org.scijava.ui.UIService;
 import org.tensorflow.Tensor;
 
 import ij.gui.Roi;
@@ -23,14 +24,16 @@ import ij.plugin.frame.RoiManager;
 import net.imagej.Dataset;
 import net.imagej.DatasetService;
 import net.imagej.ImageJ;
+import net.imagej.ops.OpService;
 import net.imagej.table.DefaultGenericTable;
 import net.imagej.table.DoubleColumn;
 import net.imagej.table.GenericColumn;
 import net.imagej.table.GenericTable;
 import net.imagej.table.IntColumn;
 import net.imagej.tensorflow.TensorFlowService;
+import net.imglib2.RandomAccessibleInterval;
 import net.imglib2.img.Img;
-import net.imglib2.type.numeric.real.FloatType;
+import net.imglib2.type.numeric.RealType;
 
 @Plugin(type = Command.class, menuPath = "Plugins>Detection>Mask RCNN Detector", headless = true)
 public class ObjectsDetector implements Command {
@@ -49,7 +52,7 @@ public class ObjectsDetector implements Command {
 
 	@Parameter
 	private DatasetService ds;
-	
+
 	@Parameter
 	private StatusService ss;
 
@@ -65,9 +68,6 @@ public class ObjectsDetector implements Command {
 	@Parameter(choices = { "Microtubule" }, required = false)
 	private String modelNameToUse = null;
 
-	@Parameter(required = false)
-	private boolean verbose = false;
-
 	@Parameter(type = ItemIO.OUTPUT)
 	private List<Roi> roisList;
 
@@ -80,7 +80,16 @@ public class ObjectsDetector implements Command {
 	@Parameter
 	protected TensorFlowService tfService;
 
+	@Parameter
+	protected UIService ui;
+
+	@Parameter
+	protected OpService ops;
+
 	private Location modelLocation;
+
+	// This name is only used for caching the model ZIP file on disk.
+	private String modelnameCache;
 
 	@Override
 	public void run() {
@@ -114,10 +123,16 @@ public class ObjectsDetector implements Command {
 
 	private void runPrediction() {
 
-		// This name is only used for caching the model ZIP file on disk.
-		String modelName = FilenameUtils.getBaseName(modelLocation.getURI().toString());
+		this.modelnameCache = FilenameUtils.getBaseName(modelLocation.getURI().toString());
 
-		Module module;
+		// How many images to process ?
+		long nImages;
+		if (this.inputDataset.numDimensions() == 3) {
+			nImages = this.inputDataset.dimension(2);
+		} else {
+			nImages = 1;
+		}
+		Dataset twoDImage;
 
 		double startTime;
 		double stopTime;
@@ -127,87 +142,162 @@ public class ObjectsDetector implements Command {
 		log.info("Preprocessing image...");
 		ss.showStatus(0, 100, "Preprocessing image.");
 		startTime = System.currentTimeMillis();
-		Map<String, Object> inputs = new HashMap<>();
-		inputs.put("modelLocation", modelLocation);
-		inputs.put("modelName", modelName);
-		inputs.put("inputDataset", inputDataset);
-		inputs.put("verbose", verbose);
-		module = ij.module().waitFor(ij.command().run(PreprocessImage.class, true, inputs));
-		Tensor<?> moldedImage = (Tensor<?>) module.getOutput("moldedImage");
-		Tensor<?> imageMetadata = (Tensor<?>) module.getOutput("imageMetadata");
-		Tensor<?> windows = (Tensor<?>) module.getOutput("windows");
-		Tensor<?> anchors = (Tensor<?>) module.getOutput("anchors");
-		Tensor<?> originalImageShape = (Tensor<?>) module.getOutput("originalImageShape");
-		Tensor<?> imageShape = (Tensor<?>) module.getOutput("imageShape");
-		List<String> classLabels = (List<String>) module.getOutput("classLabels");
+
+		Module preprocessModule;
+		List<String> classLabels = new ArrayList<>();
+
+		Map<String, List<Tensor<?>>> preprocessingOutputsMap = new HashMap<>();
+		preprocessingOutputsMap.put("moldedImage", new ArrayList<>());
+		preprocessingOutputsMap.put("imageMetadata", new ArrayList<>());
+		preprocessingOutputsMap.put("windows", new ArrayList<>());
+		preprocessingOutputsMap.put("anchors", new ArrayList<>());
+		preprocessingOutputsMap.put("originalImageShape", new ArrayList<>());
+		preprocessingOutputsMap.put("imageShape", new ArrayList<>());
+
+		for (int i = 0; i < nImages; i++) {
+			// Get a 2D image and run it.
+			twoDImage = this.getStack(i);
+			preprocessModule = this.preprocessSingleImage(twoDImage);
+
+			// Gather outputs in a Map.
+			for (Map.Entry<String, List<Tensor<?>>> entry : preprocessingOutputsMap.entrySet()) {
+				entry.getValue().add((Tensor<?>) preprocessModule.getOutput(entry.getKey()));
+			}
+			// Gather non-Tensor outputs.
+			classLabels = (List<String>) preprocessModule.getOutput("classLabels");
+		}
 
 		stopTime = System.currentTimeMillis();
 		elapsedTime = stopTime - startTime;
-		log.info("Preprocessing done. I took " + elapsedTime / 1000 + " s.");
+		log.info("Preprocessing done. It tooks " + elapsedTime / 1000 + " s.");
 
 		// Detect objects.
 		log.info("Running detection...");
 		ss.showStatus(33, 100, "Running detection.");
 		startTime = System.currentTimeMillis();
-		inputs = new HashMap<>();
-		inputs.put("modelLocation", modelLocation);
-		inputs.put("modelName", modelName);
-		inputs.put("moldedImage", moldedImage);
-		inputs.put("imageMetadata", imageMetadata);
-		inputs.put("anchors", anchors);
-		inputs.put("verbose", verbose);
-		module = ij.module().waitFor(ij.command().run(Detector.class, true, inputs));
-		Tensor<?> detections = (Tensor<?>) module.getOutput("detections");
-		Tensor<?> mrcnn_mask = (Tensor<?>) module.getOutput("mrcnn_mask");
-		Tensor<?> mrcnn_class = (Tensor<?>) module.getOutput("mrcnn_class");
-		Tensor<?> mrcnn_bbox = (Tensor<?>) module.getOutput("mrcnn_bbox");
-		Tensor<?> rois = (Tensor<?>) module.getOutput("rois");
-		
+
+		Module detectionModule;
+
+		Map<String, List<Tensor<?>>> detectionOutputsMap = new HashMap<>();
+		detectionOutputsMap.put("detections", new ArrayList<>());
+		detectionOutputsMap.put("mrcnn_mask", new ArrayList<>());
+		detectionOutputsMap.put("mrcnn_class", new ArrayList<>());
+		detectionOutputsMap.put("mrcnn_bbox", new ArrayList<>());
+		detectionOutputsMap.put("rois", new ArrayList<>());
+
+		for (int i = 0; i < nImages; i++) {
+			// Get a 2D image and run it.
+			twoDImage = this.getStack(i);
+			detectionModule = this.detectSingleImage(preprocessingOutputsMap.get("moldedImage").get(i),
+					preprocessingOutputsMap.get("imageMetadata").get(i), preprocessingOutputsMap.get("anchors").get(i));
+
+			// Gather outputs in a Map.
+			for (Map.Entry<String, List<Tensor<?>>> entry : detectionOutputsMap.entrySet()) {
+				entry.getValue().add((Tensor<?>) detectionModule.getOutput(entry.getKey()));
+			}
+		}
+
 		stopTime = System.currentTimeMillis();
 		elapsedTime = stopTime - startTime;
-		log.info("Detection done. I took " + elapsedTime / 1000 + " s.");
+		log.info("Detection done. It tooks " + elapsedTime / 1000 + " s.");
 
 		// Postprocess results.
 		log.info("Postprocessing results...");
 		ss.showStatus(66, 100, "Postprocessing results.");
 		startTime = System.currentTimeMillis();
-		inputs = new HashMap<>();
+
+		Module postprocessModule;
+
+		Map<String, List<Tensor<?>>> postprocessOutputsMap = new HashMap<>();
+		postprocessOutputsMap.put("rois", new ArrayList<>());
+		postprocessOutputsMap.put("class_ids", new ArrayList<>());
+		postprocessOutputsMap.put("scores", new ArrayList<>());
+		postprocessOutputsMap.put("mrcnn_bbox", new ArrayList<>());
+		postprocessOutputsMap.put("masks", new ArrayList<>());
+
+		for (int i = 0; i < nImages; i++) {
+			// Get a 2D image and run it.
+			twoDImage = this.getStack(i);
+			postprocessModule = this.postprocessSingleImage(detectionOutputsMap.get("detections").get(i),
+					detectionOutputsMap.get("mrcnn_mask").get(i),
+					preprocessingOutputsMap.get("originalImageShape").get(i),
+					preprocessingOutputsMap.get("imageShape").get(i), preprocessingOutputsMap.get("windows").get(i));
+
+			// Gather outputs in a Map.
+			for (Map.Entry<String, List<Tensor<?>>> entry : postprocessOutputsMap.entrySet()) {
+				entry.getValue().add((Tensor<?>) postprocessModule.getOutput(entry.getKey()));
+			}
+		}
+
+		stopTime = System.currentTimeMillis();
+		elapsedTime = stopTime - startTime;
+		log.info("Postprocessing done. It tooks " + elapsedTime / 1000 + " s.");
+
+		int nDetectedObjects = postprocessOutputsMap.get("scores").stream().mapToInt(tensor -> (int) tensor.shape()[0])
+				.sum();
+
+		// Format and return outputs.
+		if (nDetectedObjects == 0) {
+			this.roisList = new ArrayList<Roi>();
+			this.table = new DefaultGenericTable();
+			this.masksImage = null;
+		} else {
+			this.roisList = this.fillRoiManager(postprocessOutputsMap.get("rois"), postprocessOutputsMap.get("scores"),
+					postprocessOutputsMap.get("class_ids"));
+			this.table = this.fillTable(postprocessOutputsMap.get("rois"), postprocessOutputsMap.get("scores"),
+					postprocessOutputsMap.get("class_ids"), classLabels);
+			this.masksImage = this.createMaskImage(postprocessOutputsMap.get("masks"));
+		}
+
+		log.info(nDetectedObjects + " objects detected.");
+
+		ss.showStatus(100, 100, "Done.");
+		log.info("Detection done");
+	}
+
+	private Dataset getStack(int position) {
+		if (this.inputDataset.numDimensions() == 3) {
+			return ds.create((RandomAccessibleInterval) ops.transform().hyperSliceView(this.inputDataset, 2, position));
+		} else {
+			return this.inputDataset;
+		}
+	}
+
+	private Module preprocessSingleImage(Dataset data) {
+		Map<String, Object> inputs = new HashMap<>();
+		inputs.put("modelLocation", this.modelLocation);
+		inputs.put("modelName", this.modelnameCache);
+		inputs.put("inputDataset", data);
+		Module module = ij.module().waitFor(ij.command().run(PreprocessImage.class, true, inputs));
+		return module;
+	}
+
+	private Module detectSingleImage(Tensor<?> moldedImage, Tensor<?> imageMetadata, Tensor<?> anchors) {
+		Map<String, Object> inputs = new HashMap<>();
+		inputs.put("modelLocation", this.modelLocation);
+		inputs.put("modelName", this.modelnameCache);
+		inputs.put("moldedImage", moldedImage);
+		inputs.put("imageMetadata", imageMetadata);
+		inputs.put("anchors", anchors);
+		Module module = ij.module().waitFor(ij.command().run(Detector.class, true, inputs));
+		return module;
+	}
+
+	private Module postprocessSingleImage(Tensor<?> detections, Tensor<?> mrcnn_mask, Tensor<?> originalImageShape,
+			Tensor<?> imageShape, Tensor<?> windows) {
+		Map<String, Object> inputs = new HashMap<>();
 		inputs.put("modelLocation", modelLocation);
-		inputs.put("modelName", modelName);
+		inputs.put("modelName", this.modelnameCache);
 		inputs.put("detections", detections);
 		inputs.put("mrcnnMask", mrcnn_mask);
 		inputs.put("originalImageShape", originalImageShape);
 		inputs.put("imageShape", imageShape);
 		inputs.put("window", windows);
-		inputs.put("verbose", verbose);
-		module = ij.module().waitFor(ij.command().run(PostprocessImage.class, true, inputs));
-		Tensor<?> finalROIs = (Tensor<?>) module.getOutput("rois");
-		Tensor<?> classIds = (Tensor<?>) module.getOutput("class_ids");
-		Tensor<?> scores = (Tensor<?>) module.getOutput("scores");
-		Tensor<?> masks = (Tensor<?>) module.getOutput("masks");
-		
-		stopTime = System.currentTimeMillis();
-		elapsedTime = stopTime - startTime;
-		log.info("Postprocessing done. I took " + elapsedTime / 1000 + " s.");
-
-		if (scores.shape()[0] == 0) {
-			this.roisList = new ArrayList<Roi>();
-			this.table = new DefaultGenericTable();
-			this.masksImage = null;
-		} else {
-			this.roisList = this.fillRoiManager(finalROIs, scores, classIds);
-			this.table = this.fillTable(finalROIs, scores, classIds, classLabels);
-
-			Img<FloatType> im = net.imagej.tensorflow.Tensors.imgFloat((Tensor<Float>) masks);
-			this.masksImage = ds.create(im);
-		}
-
-		log.info(scores.shape()[0] + " objects detected.");
-		ss.showStatus(100, 100, "Done.");
-		log.info("Detection done");
+		Module module = ij.module().waitFor(ij.command().run(PostprocessImage.class, true, inputs));
+		return module;
 	}
 
-	protected List<Roi> fillRoiManager(Tensor<?> rois, Tensor<?> scores, Tensor<?> classIds) {
+	protected List<Roi> fillRoiManager(List<Tensor<?>> rois, List<Tensor<?>> scores, List<Tensor<?>> classIds) {
 		// TODO: output masks as polygons ? (need a marching cube-like algorithm.)
 
 		RoiManager rm = RoiManager.getRoiManager();
@@ -216,31 +306,39 @@ public class ObjectsDetector implements Command {
 		List<Roi> roisList = new ArrayList<>();
 		Roi box = null;
 		int x1, y1, x2, y2;
+		int id = 0;
 
-		int nRois = (int) rois.shape()[0];
-		int nCoords = (int) rois.shape()[1];
-		int[][] roisArray = rois.copyTo(new int[nRois][nCoords]);
+		for (int n = 0; n < rois.size(); n++) {
+			int nRois = (int) rois.get(n).shape()[0];
+			int nCoords = (int) rois.get(n).shape()[1];
+			int[][] roisArray = rois.get(n).copyTo(new int[nRois][nCoords]);
 
-		float[] scoresArray = scores.copyTo(new float[(int) scores.shape()[0]]);
-		int[] classIdsArray = classIds.copyTo(new int[(int) classIds.shape()[0]]);
+			float[] scoresArray = scores.get(n).copyTo(new float[(int) scores.get(n).shape()[0]]);
+			int[] classIdsArray = classIds.get(n).copyTo(new int[(int) classIds.get(n).shape()[0]]);
 
-		for (int i = 0; i < roisArray.length; i++) {
-			x1 = roisArray[i][0];
-			y1 = roisArray[i][1];
-			x2 = roisArray[i][2];
-			y2 = roisArray[i][3];
-			box = new Roi(y1, x1, y2 - y1, x2 - x1);
-			box.setName("BBox-" + i + "-Score-" + scoresArray[i] + "-ClassID-" + classIdsArray[i]);
-			rm.addRoi(box);
-			roisList.add(box);
+			for (int i = 0; i < roisArray.length; i++) {
+				x1 = roisArray[i][0];
+				y1 = roisArray[i][1];
+				x2 = roisArray[i][2];
+				y2 = roisArray[i][3];
+				box = new Roi(y1, x1, y2 - y1, x2 - x1);
+				box.setPosition(n + 1);
+				box.setName("BBox-" + id + "-Score-" + scoresArray[i] + "-ClassID-" + classIdsArray[i] + "-Frame-" + n);
+				rm.addRoi(box);
+				roisList.add(box);
+				id++;
+			}
 		}
+
 		return roisList;
 	}
 
-	protected GenericTable fillTable(Tensor<?> rois, Tensor<?> scores, Tensor<?> classIds, List<String> classLabels) {
+	protected GenericTable fillTable(List<Tensor<?>> rois, List<Tensor<?>> scores, List<Tensor<?>> classIds,
+			List<String> classLabels) {
 
 		GenericTable table = new DefaultGenericTable();
 		table.add(new IntColumn("id"));
+		table.add(new IntColumn("frame"));
 		table.add(new IntColumn("class_id"));
 		table.add(new GenericColumn("class_label"));
 		table.add(new DoubleColumn("score"));
@@ -250,36 +348,66 @@ public class ObjectsDetector implements Command {
 		table.add(new IntColumn("height"));
 
 		int x1, y1, x2, y2;
+		int lastRow = 0;
+		int id = 0;
 
-		int nRois = (int) rois.shape()[0];
-		int nCoords = (int) rois.shape()[1];
-		int[][] roisArray = rois.copyTo(new int[nRois][nCoords]);
+		for (int n = 0; n < rois.size(); n++) {
 
-		float[] scoresArray = scores.copyTo(new float[(int) scores.shape()[0]]);
-		int[] classIdsArray = classIds.copyTo(new int[(int) classIds.shape()[0]]);
+			int nRois = (int) rois.get(n).shape()[0];
+			int nCoords = (int) rois.get(n).shape()[1];
+			int[][] roisArray = rois.get(n).copyTo(new int[nRois][nCoords]);
 
-		for (int i = 0; i < roisArray.length; i++) {
-			x1 = roisArray[i][0];
-			y1 = roisArray[i][1];
-			x2 = roisArray[i][2];
-			y2 = roisArray[i][3];
-			table.appendRow();
-			table.set("id", i, i);
-			table.set("class_id", i, classIdsArray[i]);
-			table.set("class_label", i, classLabels.get(classIdsArray[i]));
-			table.set("score", i, (double) scoresArray[i]);
-			table.set("x", i, y1);
-			table.set("y", i, x1);
-			table.set("width", i, y1 - y2);
-			table.set("height", i, x1 - x2);
+			float[] scoresArray = scores.get(n).copyTo(new float[(int) scores.get(n).shape()[0]]);
+			int[] classIdsArray = classIds.get(n).copyTo(new int[(int) classIds.get(n).shape()[0]]);
+
+			for (int i = 0; i < roisArray.length; i++) {
+				x1 = roisArray[i][0];
+				y1 = roisArray[i][1];
+				x2 = roisArray[i][2];
+				y2 = roisArray[i][3];
+				table.appendRow();
+				lastRow = table.getRowCount() - 1;
+				table.set("id", lastRow, id);
+				table.set("frame", lastRow, n);
+				table.set("class_id", lastRow, classIdsArray[i]);
+				table.set("class_label", lastRow, classLabels.get(classIdsArray[i]));
+				table.set("score", lastRow, (double) scoresArray[i]);
+				table.set("x", lastRow, y1);
+				table.set("y", lastRow, x1);
+				table.set("width", lastRow, y1 - y2);
+				table.set("height", lastRow, x1 - x2);
+				id++;
+			}
 		}
-
 		return table;
 	}
 
+	private <T extends RealType<?>> Dataset createMaskImage(List<Tensor<?>> masks) {
+
+		List<Img<T>> maskList = new ArrayList<>();
+		for (Tensor<?> mask : masks) {
+			maskList.add((Img<T>) net.imagej.tensorflow.Tensors.imgFloat((Tensor<Float>) mask));
+		}
+
+		/*
+		 * RandomAccessibleInterval<T> im = Views.stack(maskList); ds.create(im);
+		 * 
+		 * AxisType[] axisTypes = new AxisType[] { Axes.X, Axes.Y, Axes.CHANNEL,
+		 * Axes.TIME }; ImgPlus imgPlus = new ImgPlus(ds.create(im), "image",
+		 * axisTypes);
+		 * 
+		 * log.info(imgPlus.numDimensions()); log.info(imgPlus.dimension(0));
+		 * log.info(imgPlus.dimension(1)); log.info(imgPlus.dimension(2));
+		 * log.info(imgPlus.dimension(3));
+		 * 
+		 * return ds.create(imgPlus);
+		 */
+		return null;
+	}
+
 	public void checkInput() throws Exception {
-		if (this.inputDataset.numDimensions() != 2) {
-			throw new Exception("Input image must have exactly 2 dimensions (XY).");
+		if (this.inputDataset.numDimensions() != 2 && this.inputDataset.numDimensions() != 3) {
+			throw new Exception("Input image must have 2 or 3 dimensions.");
 		}
 
 		// TODO: should be setup from model parameters.

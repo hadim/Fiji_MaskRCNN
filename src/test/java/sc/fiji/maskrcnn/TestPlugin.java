@@ -20,7 +20,8 @@ public class TestPlugin {
 		// Open an image and display it.
 		String imagePath = "/home/hadim/Documents/Code/Postdoc/ij/testdata/";
 		imagePath += "single-256x256.tif";
-		//imagePath += "Cell_Colony-1.tif";
+		//imagePath += "test-tracking-2-frames.tif";
+		// imagePath += "Cell_Colony-1.tif";
 
 		final Object dataset = ij.io().open(imagePath);
 		ij.ui().show(dataset);
@@ -30,7 +31,6 @@ public class TestPlugin {
 		inputs.put("modelPath", modelPath);
 		inputs.put("modelNameToUse", null);
 		inputs.put("inputDataset", dataset);
-		inputs.put("verbose", true);
 		ij.command().run(ObjectsDetector.class, true, inputs);
 	}
 }
