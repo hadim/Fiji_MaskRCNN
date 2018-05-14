@@ -115,8 +115,13 @@ public class ObjectsDetector implements Command {
 
 		Module module;
 
+		double startTime;
+		double stopTime;
+		double elapsedTime;
+
 		// Preprocess the image.
-		log.info("Preprocess image.");
+		log.info("Preprocessing image...");
+		startTime = System.currentTimeMillis();
 		Map<String, Object> inputs = new HashMap<>();
 		inputs.put("modelLocation", modelLocation);
 		inputs.put("modelName", modelName);
@@ -131,8 +136,13 @@ public class ObjectsDetector implements Command {
 		Tensor<?> imageShape = (Tensor<?>) module.getOutput("imageShape");
 		List<String> classLabels = (List<String>) module.getOutput("classLabels");
 
+		stopTime = System.currentTimeMillis();
+		elapsedTime = stopTime - startTime;
+		log.info("Preprocessing done. I took " + elapsedTime / 1000 + " s.");
+
 		// Detect objects.
-		log.info("Run detection.");
+		log.info("Running detection...");
+		startTime = System.currentTimeMillis();
 		inputs = new HashMap<>();
 		inputs.put("modelLocation", modelLocation);
 		inputs.put("modelName", modelName);
@@ -146,11 +156,14 @@ public class ObjectsDetector implements Command {
 		Tensor<?> mrcnn_class = (Tensor<?>) module.getOutput("mrcnn_class");
 		Tensor<?> mrcnn_bbox = (Tensor<?>) module.getOutput("mrcnn_bbox");
 		Tensor<?> rois = (Tensor<?>) module.getOutput("rois");
-
-		log.info(detections.shape()[0]);
+		
+		stopTime = System.currentTimeMillis();
+		elapsedTime = stopTime - startTime;
+		log.info("Detection done. I took " + elapsedTime / 1000 + " s.");
 
 		// Postprocess results.
-		log.info("Postprocess results.");
+		log.info("Postprocessing results...");
+		startTime = System.currentTimeMillis();
 		inputs = new HashMap<>();
 		inputs.put("modelLocation", modelLocation);
 		inputs.put("modelName", modelName);
@@ -165,6 +178,10 @@ public class ObjectsDetector implements Command {
 		Tensor<?> classIds = (Tensor<?>) module.getOutput("class_ids");
 		Tensor<?> scores = (Tensor<?>) module.getOutput("scores");
 		Tensor<?> masks = (Tensor<?>) module.getOutput("masks");
+		
+		stopTime = System.currentTimeMillis();
+		elapsedTime = stopTime - startTime;
+		log.info("Postprocessing done. I took " + elapsedTime / 1000 + " s.");
 
 		if (scores.shape()[0] == 0) {
 			this.roisList = new ArrayList<Roi>();
