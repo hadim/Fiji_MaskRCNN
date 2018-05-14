@@ -1,5 +1,9 @@
 package sc.fiji.maskrcnn;
 
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.IOException;
+import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -16,8 +20,8 @@ import org.scijava.log.LogService;
 import org.scijava.module.Module;
 import org.scijava.plugin.Parameter;
 import org.scijava.plugin.Plugin;
-import org.scijava.ui.UIService;
 import org.tensorflow.Tensor;
+import org.yaml.snakeyaml.Yaml;
 
 import ij.gui.Roi;
 import ij.plugin.frame.RoiManager;
@@ -81,15 +85,17 @@ public class ObjectsDetector implements Command {
 	protected TensorFlowService tfService;
 
 	@Parameter
-	protected UIService ui;
+	protected OpService ops;
 
 	@Parameter
-	protected OpService ops;
+	private CustomDownloadService cds;
 
 	private Location modelLocation;
 
 	// This name is only used for caching the model ZIP file on disk.
 	private String modelnameCache;
+
+	private Map<String, Object> parameters;
 
 	@Override
 	public void run() {
@@ -124,6 +130,9 @@ public class ObjectsDetector implements Command {
 	private void runPrediction() {
 
 		this.modelnameCache = FilenameUtils.getBaseName(modelLocation.getURI().toString());
+
+		// Load the ZIP model file to access the parameters.
+		this.loadParameters();
 
 		// How many images to process ?
 		long nImages;
@@ -410,12 +419,25 @@ public class ObjectsDetector implements Command {
 			throw new Exception("Input image must have 2 or 3 dimensions.");
 		}
 
-		// TODO: should be setup from model parameters.
-		if (this.inputDataset.dimension(0) > 512) {
-			throw new Exception("Width cannot be greater than 512 pixels.");
+		long maxSize = (long) this.parameters.get("image_max_dimension");
+		if (this.inputDataset.dimension(0) > maxSize) {
+			throw new Exception("Width cannot be greater than " + maxSize + " pixels.");
 		}
-		if (this.inputDataset.dimension(1) > 512) {
-			throw new Exception("Height cannot be greater than 512 pixels.");
+		if (this.inputDataset.dimension(1) > maxSize) {
+			throw new Exception("Height cannot be greater than " + maxSize + " pixels.");
+		}
+	}
+
+	private void loadParameters() {
+		try {
+			File parametersFile = cds.loadFile(this.modelLocation, this.modelnameCache, "parameters.yml");
+
+			InputStream input = new FileInputStream(parametersFile);
+			Yaml yaml = new Yaml();
+			this.parameters = (Map<String, Object>) yaml.load(input);
+
+		} catch (IOException e) {
+			log.error("Can't read parameters.yml in the ZIP model file: " + e);
 		}
 	}
 
