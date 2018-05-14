@@ -41,7 +41,6 @@ import net.imagej.table.GenericTable;
 import net.imagej.table.IntColumn;
 import net.imagej.tensorflow.TensorFlowService;
 import net.imglib2.RandomAccessibleInterval;
-import net.imglib2.img.Img;
 import net.imglib2.type.numeric.RealType;
 import net.imglib2.view.Views;
 
@@ -368,6 +367,7 @@ public class ObjectsDetector implements Command {
 			List<String> classLabels) {
 
 		GenericTable table = new DefaultGenericTable();
+
 		table.add(new IntColumn("id"));
 		table.add(new IntColumn("frame"));
 		table.add(new IntColumn("class_id"));
@@ -416,7 +416,6 @@ public class ObjectsDetector implements Command {
 	private <T extends RealType<T>> Dataset createMaskImage(List<Tensor<?>> masks) {
 
 		RandomAccessibleInterval<T> im;
-		
 
 		if (masks.size() == 1) {
 			im = (RandomAccessibleInterval<T>) net.imagej.tensorflow.Tensors.imgFloat((Tensor<Float>) masks.get(0));
@@ -424,7 +423,7 @@ public class ObjectsDetector implements Command {
 
 			List<RandomAccessibleInterval<T>> maskList = new ArrayList<>();
 			RandomAccessibleInterval<T> singleIm;
-			
+
 			for (Tensor<?> mask : masks) {
 				singleIm = (RandomAccessibleInterval<T>) net.imagej.tensorflow.Tensors.imgFloat((Tensor<Float>) mask);
 				for (int i = 0; i < mask.shape()[0]; i++) {
