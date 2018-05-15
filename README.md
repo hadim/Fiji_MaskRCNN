@@ -48,9 +48,9 @@ from sc.fiji.maskrcnn import ObjectsDetector
 modelURL = "https://github.com/hadim/Fiji_MaskRCNN/releases/download/Fiji-MaskRCNN-0.3.3/tf_model_coco_512_new.zip";
 
 inputs = {"modelURL": modelURL,
-          "odelPath": None,
+          "modelPath": None,
           "modelNameToUse": None,
-	      "inputDataset": data}
+          "inputDataset": data}
 module = ms.waitFor(cs.run(ObjectsDetector, True, inputs))
 
 rois = module.getOutput("roisList")
