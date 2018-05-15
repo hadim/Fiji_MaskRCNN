@@ -25,6 +25,7 @@ import org.scijava.plugin.Plugin;
 import org.tensorflow.Tensor;
 import org.yaml.snakeyaml.Yaml;
 
+import ij.ImagePlus;
 import ij.gui.Roi;
 import ij.plugin.frame.RoiManager;
 import net.imagej.Dataset;
@@ -352,11 +353,9 @@ public class ObjectsDetector implements Command {
 				x2 = roisArray[i][2];
 				y2 = roisArray[i][3];
 				box = new Roi(y1, x1, y2 - y1, x2 - x1);
-				// TODO: setPosition does not work properly. In short all position greater than the 
-				// input image number of frames are set to 0 (probably because the active image is this one).
 				box.setPosition(id + 1);
 				box.setName("BBox-" + id + "-Score-" + scoresArray[i] + "-ClassID-" + classIdsArray[i] + "-Frame-" + n);
-				rm.addRoi(box);
+				rm.add((ImagePlus) null, box, id + 1);
 				roisList.add(box);
 				id++;
 			}
