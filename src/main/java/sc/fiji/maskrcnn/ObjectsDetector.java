@@ -353,9 +353,9 @@ public class ObjectsDetector implements Command {
 				x2 = roisArray[i][2];
 				y2 = roisArray[i][3];
 				box = new Roi(y1, x1, y2 - y1, x2 - x1);
-				box.setPosition(id + 1);
+				box.setPosition(n + 1);
 				box.setName("BBox-" + id + "-Score-" + scoresArray[i] + "-ClassID-" + classIdsArray[i] + "-Frame-" + n);
-				rm.add((ImagePlus) null, box, id + 1);
+				rm.add((ImagePlus) null, box, n + 1);
 				roisList.add(box);
 				id++;
 			}
