@@ -115,18 +115,6 @@
 			<artifactId>imagej-tensorflow</artifactId>
 		</dependency>
 
-		<!-- GPU support only on Linux at the moment. See: https://www.tensorflow.org/versions/master/install/install_java -->
-		<dependency>
-			<groupId>org.tensorflow</groupId>
-			<artifactId>libtensorflow</artifactId>
-			<version>1.7.0</version>
-		</dependency>
-		<dependency>
-			<groupId>org.tensorflow</groupId>
-			<artifactId>libtensorflow_jni_gpu</artifactId>
-			<version>1.7.0</version>
-		</dependency>
-
 		<!-- https://mvnrepository.com/artifact/org.apache.commons/commons-io -->
 		<dependency>
 			<groupId>org.apache.commons</groupId>
