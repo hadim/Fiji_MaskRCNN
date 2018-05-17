@@ -24,11 +24,10 @@ dependencies:
   - markdown
   - joblib
   - pip:
-    - --no-deps
     - keras
     - imgaug
     - pycocotools
     - tensorflow-gpu
     - tensorboard
-    - https://github.com/Borda/Mask_RCNN/archive/refactor.zip
+    - https://github.com/matterport/Mask_RCNN/archive/master.zip
     - https://github.com/hadim/simuscope/archive/master.zip
