@@ -10,11 +10,6 @@ If you build a model using this project and you think can be useful to others pl
 
 ## Usage
 
-- [Download the latest JAR here](http://maven.imagej.net/service/local/artifact/maven/redirect?r=releases&g=org.scijava&a=Fiji_MaskRCNN&v=LATEST&e=jar).
-- Copy it in the `jars/` folder of your Fiji installation.
-- Open an image (2D or 3D).
-- Run the plugin with `Plugins > Detection > Mask RCNN Detector`.
-
 - Start [Fiji](https://imagej.net/Fiji/Downloads).
 - Click on `Help ▶ Update...`.
 - In the new window, click on `Manage update sites`.
