@@ -86,7 +86,7 @@ public class ObjectsDetector implements Command {
 	@Parameter(visibility = ItemVisibility.MESSAGE)
 	private final String or2 = "or";
 
-	@Parameter(choices = { "Microtubule" }, required = false, label = "Packaged Models",
+	@Parameter(choices = { "---", "Microtubule" }, required = false, label = "Packaged Models",
 		description = "A list of prepackaged models.")
 	private String modelNameToUse = null;
 
@@ -120,25 +120,32 @@ public class ObjectsDetector implements Command {
 
 	@Override
 	public void run() {
-
 		try {
 
 			// Get model location
-			if (modelURL == null) {
-				if (modelPath == null) {
+			if (modelURL == null || modelURL.equals("")) {
+				if (modelPath == null || modelPath.equals("")) {
+
 					if (modelNameToUse == null) {
 						throw new Exception("modelURL, modelPath or modelNameToUse, needs to be provided.");
 					}
-					this.modelLocation = new FileLocation(AVAILABLE_MODELS.get(modelNameToUse));
 
-					throw new Exception("modelURL, modelPath or modelToUse, needs to be provided.");
+					else if (AVAILABLE_MODELS.containsKey(modelNameToUse)) {
+						this.modelLocation = new HTTPLocation(AVAILABLE_MODELS.get(modelNameToUse));
+					}
+					else {
+						throw new Exception("You need to select a valid prepackaged models.");
+					}
+
 				}
-				this.modelLocation = new FileLocation(modelPath);
+				else {
+					this.modelLocation = new FileLocation(modelPath);
+				}
 			}
 			else {
 				this.modelLocation = new HTTPLocation(modelURL);
 			}
-
+			log.info(this.modelLocation.getURI());
 			// Get a name used for caching the model.
 			this.modelnameCache = FilenameUtils.getBaseName(modelLocation.getURI().toString());
 
@@ -446,8 +453,10 @@ public class ObjectsDetector implements Command {
 		RandomAccessibleInterval<T> im;
 
 		if (masks.size() == 1) {
-			im = (RandomAccessibleInterval<T>) net.imagej.tensorflow.Tensors.imgFloat(
-				(Tensor<Float>) masks.get(0));
+			RandomAccessibleInterval<T> imgFloat =
+				(RandomAccessibleInterval<T>) net.imagej.tensorflow.Tensors.imgFloat((Tensor<Float>) masks
+					.get(0));
+			im = imgFloat;
 		}
 		else {
 
