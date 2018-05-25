@@ -29,6 +29,7 @@ import net.imglib2.view.Views;
 
 import org.apache.commons.io.FilenameUtils;
 import org.scijava.ItemIO;
+import org.scijava.ItemVisibility;
 import org.scijava.app.StatusService;
 import org.scijava.command.Command;
 import org.scijava.command.CommandInfo;
@@ -47,8 +48,7 @@ import ij.ImagePlus;
 import ij.gui.Roi;
 import ij.plugin.frame.RoiManager;
 
-@Plugin(type = Command.class, menuPath = "Plugins>Detection>Mask RCNN Detector",
-	headless = true)
+@Plugin(type = Command.class, menuPath = "Plugins>Detection>Mask RCNN Detector", headless = true)
 public class ObjectsDetector implements Command {
 
 	static private Map<String, String> AVAILABLE_MODELS = new HashMap<>();
@@ -69,17 +69,29 @@ public class ObjectsDetector implements Command {
 	@Parameter
 	private StatusService ss;
 
-	@Parameter(required = false)
+	@Parameter(visibility = ItemVisibility.MESSAGE)
+	private final String header = "You can select the model from 3 different sources.";
+
+	@Parameter(required = false, label = "Model URL",
+		description = "The URL to the model as a ZIP file. It will be downloaded and cached to your disk.")
 	private String modelURL = null;
 
-	@Parameter(required = false)
+	@Parameter(visibility = ItemVisibility.MESSAGE)
+	private final String or1 = "or";
+
+	@Parameter(required = false, label = "Model File Path",
+		description = "The filepath to the model as a ZIP file.")
 	private String modelPath = null;
+
+	@Parameter(visibility = ItemVisibility.MESSAGE)
+	private final String or2 = "or";
+
+	@Parameter(choices = { "Microtubule" }, required = false, label = "Packaged Models",
+		description = "A list of prepackaged models.")
+	private String modelNameToUse = null;
 
 	@Parameter
 	private Dataset inputDataset;
-
-	@Parameter(choices = { "Microtubule" }, required = false)
-	private String modelNameToUse = null;
 
 	@Parameter(type = ItemIO.OUTPUT)
 	private List<Roi> roisList;
@@ -115,28 +127,20 @@ public class ObjectsDetector implements Command {
 			if (modelURL == null) {
 				if (modelPath == null) {
 					if (modelNameToUse == null) {
-						throw new Exception(
-							"modelURL, modelPath or modelNameToUse, needs to be provided.");
+						throw new Exception("modelURL, modelPath or modelNameToUse, needs to be provided.");
 					}
-					else {
-						this.modelLocation = new FileLocation(AVAILABLE_MODELS.get(
-							modelNameToUse));
-					}
+					this.modelLocation = new FileLocation(AVAILABLE_MODELS.get(modelNameToUse));
 
-					throw new Exception(
-						"modelURL, modelPath or modelToUse, needs to be provided.");
+					throw new Exception("modelURL, modelPath or modelToUse, needs to be provided.");
 				}
-				else {
-					this.modelLocation = new FileLocation(modelPath);
-				}
+				this.modelLocation = new FileLocation(modelPath);
 			}
 			else {
 				this.modelLocation = new HTTPLocation(modelURL);
 			}
 
 			// Get a name used for caching the model.
-			this.modelnameCache = FilenameUtils.getBaseName(modelLocation.getURI()
-				.toString());
+			this.modelnameCache = FilenameUtils.getBaseName(modelLocation.getURI().toString());
 
 			// Load the ZIP model file to access the parameters.
 			this.loadParameters();
@@ -188,11 +192,8 @@ public class ObjectsDetector implements Command {
 			preprocessModule = this.preprocessSingleImage(twoDImage);
 
 			// Gather outputs in a Map.
-			for (Map.Entry<String, List<Tensor<?>>> entry : preprocessingOutputsMap
-				.entrySet())
-			{
-				entry.getValue().add((Tensor<?>) preprocessModule.getOutput(entry
-					.getKey()));
+			for (Map.Entry<String, List<Tensor<?>>> entry : preprocessingOutputsMap.entrySet()) {
+				entry.getValue().add((Tensor<?>) preprocessModule.getOutput(entry.getKey()));
 			}
 			// Gather non-Tensor outputs.
 			classLabels = (List<String>) preprocessModule.getOutput("classLabels");
@@ -219,16 +220,13 @@ public class ObjectsDetector implements Command {
 		for (int i = 0; i < nImages; i++) {
 			// Get a 2D image and run it.
 			twoDImage = this.getStack(i);
-			detectionModule = this.detectSingleImage(preprocessingOutputsMap.get(
-				"moldedImage").get(i), preprocessingOutputsMap.get("imageMetadata").get(
-					i), preprocessingOutputsMap.get("anchors").get(i));
+			detectionModule = this.detectSingleImage(preprocessingOutputsMap.get("moldedImage").get(i),
+				preprocessingOutputsMap.get("imageMetadata").get(i), preprocessingOutputsMap.get("anchors")
+					.get(i));
 
 			// Gather outputs in a Map.
-			for (Map.Entry<String, List<Tensor<?>>> entry : detectionOutputsMap
-				.entrySet())
-			{
-				entry.getValue().add((Tensor<?>) detectionModule.getOutput(entry
-					.getKey()));
+			for (Map.Entry<String, List<Tensor<?>>> entry : detectionOutputsMap.entrySet()) {
+				entry.getValue().add((Tensor<?>) detectionModule.getOutput(entry.getKey()));
 			}
 		}
 
@@ -253,18 +251,14 @@ public class ObjectsDetector implements Command {
 		for (int i = 0; i < nImages; i++) {
 			// Get a 2D image and run it.
 			twoDImage = this.getStack(i);
-			postprocessModule = this.postprocessSingleImage(detectionOutputsMap.get(
-				"detections").get(i), detectionOutputsMap.get("mrcnn_mask").get(i),
-				preprocessingOutputsMap.get("originalImageShape").get(i),
-				preprocessingOutputsMap.get("imageShape").get(i),
+			postprocessModule = this.postprocessSingleImage(detectionOutputsMap.get("detections").get(i),
+				detectionOutputsMap.get("mrcnn_mask").get(i), preprocessingOutputsMap.get(
+					"originalImageShape").get(i), preprocessingOutputsMap.get("imageShape").get(i),
 				preprocessingOutputsMap.get("windows").get(i));
 
 			// Gather outputs in a Map.
-			for (Map.Entry<String, List<Tensor<?>>> entry : postprocessOutputsMap
-				.entrySet())
-			{
-				entry.getValue().add((Tensor<?>) postprocessModule.getOutput(entry
-					.getKey()));
+			for (Map.Entry<String, List<Tensor<?>>> entry : postprocessOutputsMap.entrySet()) {
+				entry.getValue().add((Tensor<?>) postprocessModule.getOutput(entry.getKey()));
 			}
 		}
 
@@ -272,8 +266,8 @@ public class ObjectsDetector implements Command {
 		elapsedTime = stopTime - startTime;
 		log.info("Postprocessing done. It tooks " + elapsedTime / 1000 + " s.");
 
-		int nDetectedObjects = postprocessOutputsMap.get("scores").stream()
-			.mapToInt(tensor -> (int) tensor.shape()[0]).sum();
+		int nDetectedObjects = postprocessOutputsMap.get("scores").stream().mapToInt(
+			tensor -> (int) tensor.shape()[0]).sum();
 
 		// Format and return outputs.
 		if (nDetectedObjects == 0) {
@@ -282,14 +276,11 @@ public class ObjectsDetector implements Command {
 			this.masksImage = null;
 		}
 		else {
-			this.masksImage = this.createMaskImage(postprocessOutputsMap.get(
-				"masks"));
-			this.roisList = this.fillRoiManager(postprocessOutputsMap.get("rois"),
-				postprocessOutputsMap.get("scores"), postprocessOutputsMap.get(
-					"class_ids"));
-			this.table = this.fillTable(postprocessOutputsMap.get("rois"),
-				postprocessOutputsMap.get("scores"), postprocessOutputsMap.get(
-					"class_ids"), classLabels);
+			this.masksImage = this.createMaskImage(postprocessOutputsMap.get("masks"));
+			this.roisList = this.fillRoiManager(postprocessOutputsMap.get("rois"), postprocessOutputsMap
+				.get("scores"), postprocessOutputsMap.get("class_ids"));
+			this.table = this.fillTable(postprocessOutputsMap.get("rois"), postprocessOutputsMap.get(
+				"scores"), postprocessOutputsMap.get("class_ids"), classLabels);
 		}
 
 		log.info(nDetectedObjects + " objects detected.");
@@ -300,8 +291,8 @@ public class ObjectsDetector implements Command {
 
 	private Dataset getStack(int position) {
 		if (this.inputDataset.numDimensions() == 3) {
-			return ds.create((RandomAccessibleInterval) ops.transform()
-				.hyperSliceView(this.inputDataset, 2, position));
+			return ds.create((RandomAccessibleInterval) ops.transform().hyperSliceView(this.inputDataset,
+				2, position));
 		}
 		else {
 			return this.inputDataset;
@@ -317,15 +308,13 @@ public class ObjectsDetector implements Command {
 
 		// Disable postprocessing of the SciJava command.
 		CommandInfo command = ij.command().getCommand(PreprocessImage.class);
-		List<PreprocessorPlugin> pre = ij.plugin().createInstancesOfType(
-			PreprocessorPlugin.class);
-		Module module = ij.module().waitFor(ij.module().run(command, pre, null,
-			inputs));
+		List<PreprocessorPlugin> pre = ij.plugin().createInstancesOfType(PreprocessorPlugin.class);
+		Module module = ij.module().waitFor(ij.module().run(command, pre, null, inputs));
 		return module;
 	}
 
-	private Module detectSingleImage(Tensor<?> moldedImage,
-		Tensor<?> imageMetadata, Tensor<?> anchors)
+	private Module detectSingleImage(Tensor<?> moldedImage, Tensor<?> imageMetadata,
+		Tensor<?> anchors)
 	{
 		Map<String, Object> inputs = new HashMap<>();
 		inputs.put("modelLocation", this.modelLocation);
@@ -337,16 +326,13 @@ public class ObjectsDetector implements Command {
 
 		// Disable postprocessing of the SciJava command.
 		CommandInfo command = ij.command().getCommand(Detector.class);
-		List<PreprocessorPlugin> pre = ij.plugin().createInstancesOfType(
-			PreprocessorPlugin.class);
-		Module module = ij.module().waitFor(ij.module().run(command, pre, null,
-			inputs));
+		List<PreprocessorPlugin> pre = ij.plugin().createInstancesOfType(PreprocessorPlugin.class);
+		Module module = ij.module().waitFor(ij.module().run(command, pre, null, inputs));
 		return module;
 	}
 
-	private Module postprocessSingleImage(Tensor<?> detections,
-		Tensor<?> mrcnn_mask, Tensor<?> originalImageShape, Tensor<?> imageShape,
-		Tensor<?> windows)
+	private Module postprocessSingleImage(Tensor<?> detections, Tensor<?> mrcnn_mask,
+		Tensor<?> originalImageShape, Tensor<?> imageShape, Tensor<?> windows)
 	{
 		Map<String, Object> inputs = new HashMap<>();
 		inputs.put("modelLocation", modelLocation);
@@ -360,15 +346,13 @@ public class ObjectsDetector implements Command {
 
 		// Disable postprocessing of the SciJava command.
 		CommandInfo command = ij.command().getCommand(PostprocessImage.class);
-		List<PreprocessorPlugin> pre = ij.plugin().createInstancesOfType(
-			PreprocessorPlugin.class);
-		Module module = ij.module().waitFor(ij.module().run(command, pre, null,
-			inputs));
+		List<PreprocessorPlugin> pre = ij.plugin().createInstancesOfType(PreprocessorPlugin.class);
+		Module module = ij.module().waitFor(ij.module().run(command, pre, null, inputs));
 		return module;
 	}
 
-	protected List<Roi> fillRoiManager(List<Tensor<?>> rois,
-		List<Tensor<?>> scores, List<Tensor<?>> classIds)
+	protected List<Roi> fillRoiManager(List<Tensor<?>> rois, List<Tensor<?>> scores,
+		List<Tensor<?>> classIds)
 	{
 		// TODO: output masks as polygons ? (need a marching cube-like algorithm.)
 
@@ -385,10 +369,8 @@ public class ObjectsDetector implements Command {
 			int nCoords = (int) rois.get(n).shape()[1];
 			int[][] roisArray = rois.get(n).copyTo(new int[nRois][nCoords]);
 
-			float[] scoresArray = scores.get(n).copyTo(new float[(int) scores.get(n)
-				.shape()[0]]);
-			int[] classIdsArray = classIds.get(n).copyTo(new int[(int) classIds.get(n)
-				.shape()[0]]);
+			float[] scoresArray = scores.get(n).copyTo(new float[(int) scores.get(n).shape()[0]]);
+			int[] classIdsArray = classIds.get(n).copyTo(new int[(int) classIds.get(n).shape()[0]]);
 
 			for (int i = 0; i < roisArray.length; i++) {
 				x1 = roisArray[i][0];
@@ -397,8 +379,8 @@ public class ObjectsDetector implements Command {
 				y2 = roisArray[i][3];
 				box = new Roi(y1, x1, y2 - y1, x2 - x1);
 				box.setPosition(n + 1);
-				box.setName("BBox-" + id + "-Score-" + scoresArray[i] + "-ClassID-" +
-					classIdsArray[i] + "-Frame-" + n);
+				box.setName("BBox-" + id + "-Score-" + scoresArray[i] + "-ClassID-" + classIdsArray[i] +
+					"-Frame-" + n);
 				rm.add((ImagePlus) null, box, n + 1);
 				roisList.add(box);
 				id++;
@@ -434,10 +416,8 @@ public class ObjectsDetector implements Command {
 			int nCoords = (int) rois.get(n).shape()[1];
 			int[][] roisArray = rois.get(n).copyTo(new int[nRois][nCoords]);
 
-			float[] scoresArray = scores.get(n).copyTo(new float[(int) scores.get(n)
-				.shape()[0]]);
-			int[] classIdsArray = classIds.get(n).copyTo(new int[(int) classIds.get(n)
-				.shape()[0]]);
+			float[] scoresArray = scores.get(n).copyTo(new float[(int) scores.get(n).shape()[0]]);
+			int[] classIdsArray = classIds.get(n).copyTo(new int[(int) classIds.get(n).shape()[0]]);
 
 			for (int i = 0; i < roisArray.length; i++) {
 				x1 = roisArray[i][0];
@@ -461,9 +441,7 @@ public class ObjectsDetector implements Command {
 		return table;
 	}
 
-	private <T extends RealType<T>> Dataset createMaskImage(
-		List<Tensor<?>> masks)
-	{
+	private <T extends RealType<T>> Dataset createMaskImage(List<Tensor<?>> masks) {
 
 		RandomAccessibleInterval<T> im;
 
@@ -477,11 +455,11 @@ public class ObjectsDetector implements Command {
 			RandomAccessibleInterval<T> singleIm;
 
 			for (Tensor<?> mask : masks) {
-				singleIm = (RandomAccessibleInterval<T>) net.imagej.tensorflow.Tensors
-					.imgFloat((Tensor<Float>) mask);
+				singleIm = (RandomAccessibleInterval<T>) net.imagej.tensorflow.Tensors.imgFloat(
+					(Tensor<Float>) mask);
 				for (int i = 0; i < mask.shape()[0]; i++) {
-					maskList.add((RandomAccessibleInterval<T>) ops.transform()
-						.hyperSliceView(singleIm, 2, i));
+					maskList.add((RandomAccessibleInterval<T>) ops.transform().hyperSliceView(singleIm, 2,
+						i));
 				}
 			}
 			im = Views.stack(maskList);
@@ -494,27 +472,22 @@ public class ObjectsDetector implements Command {
 	}
 
 	public void checkInput() throws Exception {
-		if (this.inputDataset.numDimensions() != 2 && this.inputDataset
-			.numDimensions() != 3)
-		{
+		if (this.inputDataset.numDimensions() != 2 && this.inputDataset.numDimensions() != 3) {
 			throw new Exception("Input image must have 2 or 3 dimensions.");
 		}
 
 		int maxSize = (int) this.parameters.get("image_max_dimension");
 		if (this.inputDataset.dimension(0) > maxSize) {
-			throw new Exception("Width cannot be greater than " + maxSize +
-				" pixels.");
+			throw new Exception("Width cannot be greater than " + maxSize + " pixels.");
 		}
 		if (this.inputDataset.dimension(1) > maxSize) {
-			throw new Exception("Height cannot be greater than " + maxSize +
-				" pixels.");
+			throw new Exception("Height cannot be greater than " + maxSize + " pixels.");
 		}
 	}
 
 	private void loadParameters() {
 		try {
-			File parametersFile = cds.loadFile(this.modelLocation,
-				this.modelnameCache, "parameters.yml");
+			File parametersFile = cds.loadFile(this.modelLocation, this.modelnameCache, "parameters.yml");
 
 			InputStream input = new FileInputStream(parametersFile);
 			Yaml yaml = new Yaml();
