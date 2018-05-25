@@ -31,8 +31,8 @@ public class PreprocessImage extends AbstractPredictor implements Command {
 
 	private static final String MODEL_FILENAME = "preprocessing_graph.pb";
 
-	private static final List<String> OUTPUT_NODE_NAMES = Arrays.asList(
-		"molded_image", "image_metadata", "window", "anchors");
+	private static final List<String> OUTPUT_NODE_NAMES = Arrays.asList("molded_image",
+		"image_metadata", "window", "anchors");
 
 	@Parameter
 	private Location modelLocation;
@@ -128,8 +128,7 @@ public class PreprocessImage extends AbstractPredictor implements Command {
 
 		// Load parameters from YAML file
 		try {
-			File parametersFile = cds.loadFile(modelLocation, modelName,
-				"parameters.yml");
+			File parametersFile = cds.loadFile(modelLocation, modelName, "parameters.yml");
 
 			InputStream input = new FileInputStream(parametersFile);
 			Yaml yaml = new Yaml();
@@ -140,9 +139,8 @@ public class PreprocessImage extends AbstractPredictor implements Command {
 			// Compute input values
 			Map<String, Tensor<?>> inputNodes = new HashMap<>();
 
-			this.inputTensorImage = Tensors.tensorFloat(
-				(RandomAccessibleInterval<FloatType>) op.run("convert.float32",
-					inputDataset.getImgPlus()));
+			this.inputTensorImage = Tensors.tensorFloat((RandomAccessibleInterval<FloatType>) op.run(
+				"convert.float32", inputDataset.getImgPlus()));
 			inputNodes.put("input_image", this.inputTensorImage);
 
 			inputNodes.put("original_image_height", org.tensorflow.Tensors.create(
@@ -150,39 +148,32 @@ public class PreprocessImage extends AbstractPredictor implements Command {
 			inputNodes.put("original_image_width", org.tensorflow.Tensors.create(
 				((Long) this.inputTensorImage.shape()[1]).intValue()));
 
-			int[] class_ids = Utils.listDoubleToIntArray((List) data.get(
-				"class_ids"));
+			int[] class_ids = Utils.listDoubleToIntArray((List) data.get("class_ids"));
 			inputNodes.put("class_ids", org.tensorflow.Tensors.create(class_ids));
 
-			inputNodes.put("image_min_dimension", org.tensorflow.Tensors.create(
-				(int) data.get("image_min_dimension")));
-			inputNodes.put("image_max_dimension", org.tensorflow.Tensors.create(
-				(int) data.get("image_max_dimension")));
+			inputNodes.put("image_min_dimension", org.tensorflow.Tensors.create((int) data.get(
+				"image_min_dimension")));
+			inputNodes.put("image_max_dimension", org.tensorflow.Tensors.create((int) data.get(
+				"image_max_dimension")));
 
-			inputNodes.put("minimum_scale", org.tensorflow.Tensors.create(
-				((Double) data.get("minimum_scale")).floatValue()));
+			inputNodes.put("minimum_scale", org.tensorflow.Tensors.create(((Double) data.get(
+				"minimum_scale")).floatValue()));
 
-			float[] mean_pixels = Utils.listDoubleToFloatArray((List) data.get(
-				"mean_pixels"));
+			float[] mean_pixels = Utils.listDoubleToFloatArray((List) data.get("mean_pixels"));
 			inputNodes.put("mean_pixels", org.tensorflow.Tensors.create(mean_pixels));
 
-			int[] backbone_strides = Utils.listIntegerToIntArray((List) data.get(
-				"backbone_strides"));
-			inputNodes.put("backbone_strides", org.tensorflow.Tensors.create(
-				backbone_strides));
+			int[] backbone_strides = Utils.listIntegerToIntArray((List) data.get("backbone_strides"));
+			inputNodes.put("backbone_strides", org.tensorflow.Tensors.create(backbone_strides));
 
-			int[] rpn_anchor_scales = Utils.listIntegerToIntArray((List) data.get(
-				"rpn_anchor_scales"));
-			inputNodes.put("rpn_anchor_scales", org.tensorflow.Tensors.create(
-				rpn_anchor_scales));
+			int[] rpn_anchor_scales = Utils.listIntegerToIntArray((List) data.get("rpn_anchor_scales"));
+			inputNodes.put("rpn_anchor_scales", org.tensorflow.Tensors.create(rpn_anchor_scales));
 
 			float[] rpn_anchor_ratios = Utils.listDoubleToFloatArray((List) data.get(
 				"rpn_anchor_ratios"));
-			inputNodes.put("rpn_anchor_ratios", org.tensorflow.Tensors.create(
-				rpn_anchor_ratios));
+			inputNodes.put("rpn_anchor_ratios", org.tensorflow.Tensors.create(rpn_anchor_ratios));
 
-			inputNodes.put("rpn_anchor_stride", org.tensorflow.Tensors.create(
-				(int) data.get("rpn_anchor_stride")));
+			inputNodes.put("rpn_anchor_stride", org.tensorflow.Tensors.create((int) data.get(
+				"rpn_anchor_stride")));
 
 			return inputNodes;
 

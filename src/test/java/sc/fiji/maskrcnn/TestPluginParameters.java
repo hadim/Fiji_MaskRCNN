@@ -8,9 +8,7 @@ import net.imagej.ImageJ;
 
 public class TestPluginParameters {
 
-	public static void main(String[] args) throws IOException,
-		URISyntaxException
-	{
+	public static void main(String[] args) throws IOException, URISyntaxException {
 
 		final String modelURL =
 			"https://github.com/hadim/Fiji_MaskRCNN/releases/download/Fiji_MaskRCNN-0.3.3/tf_model_coco_512_new.zip";

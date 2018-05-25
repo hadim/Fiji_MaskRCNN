@@ -20,21 +20,18 @@ public class Detector extends AbstractPredictor implements Command {
 	private static final String MODEL_FILENAME = "model.pb";
 
 	// Specific parameters.
-	private static final Map<String, Object> DEFAULT_INPUT_NODES =
-		new HashMap<String, Object>()
+	private static final Map<String, Object> DEFAULT_INPUT_NODES = new HashMap<String, Object>() {
+
+		private static final long serialVersionUID = 1L;
 		{
+			put("input_image", null);
+			put("input_image_meta", null);
+			put("input_anchors", null);
+		}
+	};
 
-			private static final long serialVersionUID = 1L;
-			{
-				put("input_image", null);
-				put("input_image_meta", null);
-				put("input_anchors", null);
-			}
-		};
-
-	private static final List<String> OUTPUT_NODE_NAMES = Arrays.asList(
-		"output_detections", "output_mrcnn_class", "output_mrcnn_bbox",
-		"output_mrcnn_mask", "output_rois");
+	private static final List<String> OUTPUT_NODE_NAMES = Arrays.asList("output_detections",
+		"output_mrcnn_class", "output_mrcnn_bbox", "output_mrcnn_mask", "output_rois");
 
 	@Parameter
 	private Location modelLocation;

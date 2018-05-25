@@ -20,22 +20,20 @@ public class PostprocessImage extends AbstractPredictor implements Command {
 	private static final String MODEL_FILENAME = "postprocessing_graph.pb";
 
 	// Specific parameters.
-	private static final Map<String, Object> DEFAULT_INPUT_NODES =
-		new HashMap<String, Object>()
+	private static final Map<String, Object> DEFAULT_INPUT_NODES = new HashMap<String, Object>() {
+
+		private static final long serialVersionUID = 1L;
 		{
+			put("detections", null);
+			put("mrcnn_mask", null);
+			put("original_image_shape", null);
+			put("image_shape", null);
+			put("window", null);
+		}
+	};
 
-			private static final long serialVersionUID = 1L;
-			{
-				put("detections", null);
-				put("mrcnn_mask", null);
-				put("original_image_shape", null);
-				put("image_shape", null);
-				put("window", null);
-			}
-		};
-
-	private static final List<String> OUTPUT_NODE_NAMES = Arrays.asList("rois",
-		"class_ids", "scores", "masks");
+	private static final List<String> OUTPUT_NODE_NAMES = Arrays.asList("rois", "class_ids", "scores",
+		"masks");
 
 	@Parameter
 	private Location modelLocation;

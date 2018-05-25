@@ -23,9 +23,7 @@ public abstract class AbstractPredictor {
 	protected Graph graph;
 	protected Session session;
 
-	protected void loadModel(Location modelLocation, String modelName,
-		String modelFilename)
-	{
+	protected void loadModel(Location modelLocation, String modelName, String modelFilename) {
 		try {
 			this.graph = tfService.loadGraph(modelLocation, modelName, modelFilename);
 			this.session = new Session(this.graph);
@@ -35,9 +33,7 @@ public abstract class AbstractPredictor {
 		}
 	}
 
-	protected List<String> loadLabels(Location modelLocation, String modelName,
-		String fname)
-	{
+	protected List<String> loadLabels(Location modelLocation, String modelName, String fname) {
 
 		try {
 			return tfService.loadLabels(modelLocation, modelName, fname);

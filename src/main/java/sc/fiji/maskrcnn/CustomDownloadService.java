@@ -32,9 +32,7 @@ import org.scijava.util.ByteArray;
  * https://github.com/imagej/imagej-tensorflow/blob/2f6a924c50f79c919c97856a7b5905403c07d009/src/main/java/net/imagej/tensorflow/DefaultTensorFlowService.java
  */
 @Plugin(type = Service.class)
-public class CustomDownloadService extends AbstractService implements
-	ImageJService
-{
+public class CustomDownloadService extends AbstractService implements ImageJService {
 
 	/** Disk cache defining where compressed models are stored locally. */
 	private DiskLocationCache modelCache;
@@ -45,8 +43,8 @@ public class CustomDownloadService extends AbstractService implements
 	@Parameter
 	private AppService appService;
 
-	public File loadFile(final Location source, final String modelName,
-		final String filePath) throws IOException
+	public File loadFile(final Location source, final String modelName, final String filePath)
+		throws IOException
 	{
 		final String key = modelName + "/" + filePath;
 
@@ -78,9 +76,7 @@ public class CustomDownloadService extends AbstractService implements
 	// TODO - Migrate unpacking logic into the DownloadService proper.
 	// And consider whether/how to avoid using so much temporary space.
 
-	private File modelDir(final Location source, final String modelName)
-		throws IOException
-	{
+	private File modelDir(final Location source, final String modelName) throws IOException {
 		final File modelDir = new File(modelCache().getBaseDirectory(), modelName);
 		if (!modelDir.exists()) try {
 			downloadAndUnpackResource(source, modelDir);
@@ -92,9 +88,8 @@ public class CustomDownloadService extends AbstractService implements
 	}
 
 	/** Downloads and unpacks a zipped resource. */
-	private void downloadAndUnpackResource(final Location source,
-		final File destDir) throws InterruptedException, ExecutionException,
-		IOException
+	private void downloadAndUnpackResource(final Location source, final File destDir)
+		throws InterruptedException, ExecutionException, IOException
 	{
 		// Allocate a dynamic byte array.
 		final ByteArray byteArray = new ByteArray(1024 * 1024);
