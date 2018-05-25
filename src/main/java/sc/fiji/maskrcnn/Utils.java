@@ -1,3 +1,4 @@
+
 package sc.fiji.maskrcnn;
 
 import java.util.List;
@@ -25,9 +26,11 @@ public class Utils {
 		for (int i = 0; i < list.size(); i++) {
 			if (list.get(i) instanceof Integer) {
 				array[i] = ((Integer) list.get(i)).floatValue();
-			} else if (list.get(i) instanceof Double) {
+			}
+			else if (list.get(i) instanceof Double) {
 				array[i] = ((Double) list.get(i)).floatValue();
-			} else {
+			}
+			else {
 				// Should not happen.
 				array[i] = (float) list.get(i);
 			}

@@ -1,3 +1,4 @@
+
 package sc.fiji.maskrcnn;
 
 import java.io.IOException;
@@ -9,10 +10,14 @@ import net.imagej.ImageJ;
 
 public class TestPlugin {
 
-	public static void main(String[] args) throws IOException, URISyntaxException {
+	public static void main(String[] args) throws IOException,
+		URISyntaxException
+	{
 
-		final String modelURL = "https://github.com/hadim/Fiji_MaskRCNN/releases/download/Fiji_MaskRCNN-0.3.3/tf_model_coco_512_new.zip";
-		final String modelPath = "/home/hadim/Drive/Data/Neural_Network/Mask-RCNN/Microtubules/saved_model/tf_model_coco_512_new.zip";
+		final String modelURL =
+			"https://github.com/hadim/Fiji_MaskRCNN/releases/download/Fiji_MaskRCNN-0.3.3/tf_model_coco_512_new.zip";
+		final String modelPath =
+			"/home/hadim/Drive/Data/Neural_Network/Mask-RCNN/Microtubules/saved_model/tf_model_coco_512_new.zip";
 
 		final ImageJ ij = new ImageJ();
 		ij.launch(args);

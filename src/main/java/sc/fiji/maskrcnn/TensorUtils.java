@@ -1,11 +1,12 @@
+
 package sc.fiji.maskrcnn;
+
+import net.imagej.tensorflow.GraphBuilder;
 
 import org.tensorflow.Graph;
 import org.tensorflow.Output;
 import org.tensorflow.Session;
 import org.tensorflow.Tensor;
-
-import net.imagej.tensorflow.GraphBuilder;
 
 public class TensorUtils {
 
@@ -14,11 +15,12 @@ public class TensorUtils {
 			final GraphBuilder b = new GraphBuilder(g);
 
 			final Output input = b.constant("input", tensor);
-			final Output output = g.opBuilder("ExpandDims", "ExpandDims").addInput(input)
-					.addInput(b.constant("dimension", dimension)).build().output(0);
+			final Output output = g.opBuilder("ExpandDims", "ExpandDims").addInput(
+				input).addInput(b.constant("dimension", dimension)).build().output(0);
 
 			try (Session s = new Session(g)) {
-				Tensor<?> result = (Tensor<?>) s.runner().fetch(output.op().name()).run().get(0);
+				Tensor<?> result = (Tensor<?>) s.runner().fetch(output.op().name())
+					.run().get(0);
 				return result;
 			}
 		}

@@ -1,15 +1,16 @@
+
 package sc.fiji.maskrcnn;
 
 import java.io.IOException;
 import java.util.List;
+
+import net.imagej.tensorflow.TensorFlowService;
 
 import org.scijava.io.location.Location;
 import org.scijava.log.LogService;
 import org.scijava.plugin.Parameter;
 import org.tensorflow.Graph;
 import org.tensorflow.Session;
-
-import net.imagej.tensorflow.TensorFlowService;
 
 public abstract class AbstractPredictor {
 
@@ -22,20 +23,26 @@ public abstract class AbstractPredictor {
 	protected Graph graph;
 	protected Session session;
 
-	protected void loadModel(Location modelLocation, String modelName, String modelFilename) {
+	protected void loadModel(Location modelLocation, String modelName,
+		String modelFilename)
+	{
 		try {
 			this.graph = tfService.loadGraph(modelLocation, modelName, modelFilename);
 			this.session = new Session(this.graph);
-		} catch (IOException e) {
+		}
+		catch (IOException e) {
 			log.error(e);
 		}
 	}
 
-	protected List<String> loadLabels(Location modelLocation, String modelName, String fname) {
+	protected List<String> loadLabels(Location modelLocation, String modelName,
+		String fname)
+	{
 
 		try {
 			return tfService.loadLabels(modelLocation, modelName, fname);
-		} catch (IOException e) {
+		}
+		catch (IOException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
