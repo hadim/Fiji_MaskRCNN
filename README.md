@@ -15,6 +15,15 @@ If you build a model using this project and you think can be useful to others pl
 - Open an image (2D or 3D).
 - Run the plugin with `Plugins > Detection > Mask RCNN Detector`.
 
+- Start [Fiji](https://imagej.net/Fiji/Downloads).
+- Click on `Help ▶ Update...`.
+- In the new window, click on `Manage update sites`.
+- Scroll to find `Fiji_MaskRCNN` in the column `Name`. Click on it.
+- Click `Close` and then `Apply changes`.
+- Restart Fiji.
+- Open your image.
+- Then you can start the plugin with `Plugins ► Detection ► Mask RCNN Detector`.
+
 ## How it works
 
 The inputs consist of:

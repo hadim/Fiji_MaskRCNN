@@ -69,21 +69,21 @@ public class ObjectsDetector implements Command {
 	@Parameter
 	private StatusService ss;
 
-	@Parameter(visibility = ItemVisibility.MESSAGE)
+	@Parameter(visibility = ItemVisibility.MESSAGE, required = false)
 	private final String header = "You can select the model from 3 different sources.";
 
 	@Parameter(required = false, label = "Model URL",
 		description = "The URL to the model as a ZIP file. It will be downloaded and cached to your disk.")
 	private String modelURL = null;
 
-	@Parameter(visibility = ItemVisibility.MESSAGE)
+	@Parameter(visibility = ItemVisibility.MESSAGE, required = false)
 	private final String or1 = "or";
 
 	@Parameter(required = false, label = "Model File Path",
 		description = "The filepath to the model as a ZIP file.")
 	private String modelPath = null;
 
-	@Parameter(visibility = ItemVisibility.MESSAGE)
+	@Parameter(visibility = ItemVisibility.MESSAGE, required = false)
 	private final String or2 = "or";
 
 	@Parameter(choices = { "---", "Microtubule" }, required = false, label = "Packaged Models",
