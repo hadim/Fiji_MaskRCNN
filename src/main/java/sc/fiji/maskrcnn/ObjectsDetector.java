@@ -145,7 +145,7 @@ public class ObjectsDetector implements Command {
 			else {
 				this.modelLocation = new HTTPLocation(modelURL);
 			}
-			log.info(this.modelLocation.getURI());
+
 			// Get a name used for caching the model.
 			this.modelnameCache = FilenameUtils.getBaseName(modelLocation.getURI().toString());
 
