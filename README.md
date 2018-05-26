@@ -49,7 +49,7 @@ Here is an example script:
 
 from sc.fiji.maskrcnn import ObjectsDetector
 
-modelURL = "https://github.com/hadim/Fiji_MaskRCNN/releases/download/Fiji-MaskRCNN-0.3.3/tf_model_microtubule_coco_512.zip";
+modelURL = "https://github.com/hadim/Fiji_MaskRCNN/releases/download/Fiji-MaskRCNN-0.4.0/tf_model_microtubule_coco_512.zip";
 
 inputs = {"modelURL": modelURL,
           "modelPath": None,
