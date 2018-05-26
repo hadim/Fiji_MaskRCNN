@@ -54,7 +54,7 @@ public class ObjectsDetector implements Command {
 	static private Map<String, String> AVAILABLE_MODELS = new HashMap<>();
 	static {
 		AVAILABLE_MODELS.put("Microtubule",
-			"https://github.com/hadim/Fiji_MaskRCNN/releases/download/Fiji_MaskRCNN-0.3.3/tf_model_coco_512_new.zip");
+			"https://github.com/hadim/Fiji_MaskRCNN/releases/download/Fiji_MaskRCNN-0.4.0/tf_model_microtubule_coco_512.zip");
 	}
 
 	@Parameter
@@ -283,11 +283,6 @@ public class ObjectsDetector implements Command {
 			this.masksImage = null;
 		}
 		else {
-
-			log.info(postprocessOutputsMap.get("masks"));
-			postprocessOutputsMap = this.removeZeroAreaObjects(postprocessOutputsMap);
-			log.info(postprocessOutputsMap.get("masks"));
-
 			this.masksImage = this.createMaskImage(postprocessOutputsMap.get("masks"));
 			this.roisList = this.fillRoiManager(postprocessOutputsMap.get("rois"), postprocessOutputsMap
 				.get("scores"), postprocessOutputsMap.get("class_ids"));
@@ -445,8 +440,8 @@ public class ObjectsDetector implements Command {
 				table.set("score", lastRow, (double) scoresArray[i]);
 				table.set("x", lastRow, y1);
 				table.set("y", lastRow, x1);
-				table.set("width", lastRow, y1 - y2);
-				table.set("height", lastRow, x1 - x2);
+				table.set("width", lastRow, y2 - y1);
+				table.set("height", lastRow, x2 - x1);
 				id++;
 			}
 		}
@@ -511,42 +506,6 @@ public class ObjectsDetector implements Command {
 		catch (IOException e) {
 			log.error("Can't read parameters.yml in the ZIP model file: " + e);
 		}
-	}
-
-	private Map<String, List<Tensor<?>>> removeZeroAreaObjects(
-		Map<String, List<Tensor<?>>> postprocessOutputsMap)
-	{
-		List<Tensor<?>> rois = postprocessOutputsMap.get("rois");
-		List<Tensor<?>> class_ids = postprocessOutputsMap.get("class_ids");
-		List<Tensor<?>> scores = postprocessOutputsMap.get("scores");
-		List<Tensor<?>> mrcnn_bbox = postprocessOutputsMap.get("mrcnn_bbox");
-		List<Tensor<?>> masks = postprocessOutputsMap.get("masks");
-
-		Tensor<?> currentRoi;
-		Tensor<?> currentMasks;
-
-		// TODO: for each frame, check in the mask Tensor if it contains one or more
-		// objects with a 0 area. Then delete this object from the tensor. The
-		// difficulty comes from editing the tensor. It has to be done in a
-		// TensorFlow graph.
-		for (int frame = 0; frame < rois.size(); frame++) {
-			currentRoi = rois.get(frame);
-			currentMasks = masks.get(frame);
-
-			/*try (Graph g = new Graph()) {
-				OperationBuilder opBuilder = g.opBuilder("Const", "MyConst");
-				opBuilder = opBuilder.setAttr("dtype", currentMasks.dataType());
-				opBuilder.setAttr("value", currentMasks);
-				opBuilder.build();
-			
-				try (Session s = new Session(g); Tensor output = s.runner().fetch("MyConst").run().get(0)) {
-					log.info(output);
-				}
-			}*/
-
-		}
-
-		return postprocessOutputsMap;
 	}
 
 }

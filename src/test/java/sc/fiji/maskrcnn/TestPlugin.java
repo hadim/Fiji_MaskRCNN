@@ -13,22 +13,23 @@ public class TestPlugin {
 	public static void main(String[] args) throws IOException, URISyntaxException {
 
 		final String modelURL =
-			"https://github.com/hadim/Fiji_MaskRCNN/releases/download/Fiji_MaskRCNN-0.3.3/tf_model_coco_512_new.zip";
+			"https://github.com/hadim/Fiji_MaskRCNN/releases/download/Fiji_MaskRCNN-0.4.0/tf_model_microtubule_coco_512.zip";
 		final String modelPath =
-			"/home/hadim/Drive/Data/Neural_Network/Mask-RCNN/Microtubules/saved_model/tf_model_coco_512_new.zip";
+			"/home/hadim/Drive/Data/Neural_Network/Mask-RCNN/Microtubules/saved_model/tf_model_microtubule_coco_512.zip";
 
 		final ImageJ ij = new ImageJ();
 		ij.launch(args);
 
 		// Open an image and display it.
-		String imagePath = "/home/hadim/Documents/Code/Postdoc/ij/testdata/";
-		// imagePath += "single-256x256.tif";
-		// imagePath += "test-tracking-2-frames.tif";
-		// imagePath += "seed-small-10-frames.tif";
-		// imagePath += "Cell_Colony-1.tif";
-		// imagePath += "FakeTracks.tif";
-		// imagePath += "Cell_Colony.tif";
-		imagePath += "Spindle-1-Frame.tif";
+		String basePath = "/home/hadim/Documents/Code/Postdoc/ij/testdata/";
+		String imagePath = basePath + "single-256x256.tif";
+		// imagePath = basePath + "test-tracking-2-frames.tif";
+		// imagePath = basePath + "seed-small-10-frames.tif";
+		// imagePath = basePath + "Cell_Colony-1.tif";
+		// imagePath = basePath + "FakeTracks.tif";
+		// imagePath = basePath + "Cell_Colony.tif";
+		imagePath = basePath + "Spindle-1-Frame.tif";
+		// imagePath = basePath + "Spindle-1-Frame-Small.tif";
 
 		final Object dataset = ij.io().open(imagePath);
 		ij.ui().show(dataset);
