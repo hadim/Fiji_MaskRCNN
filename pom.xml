@@ -11,7 +11,7 @@
 	</parent>
 
 	<artifactId>Fiji_MaskRCNN</artifactId>
-	<version>0.3.8-SNAPSHOT</version>
+	<version>0.3.8</version>
 
 	<name>Fiji_MaskRCNN</name>
 	<description>A Fiji plugin for Mask RCNN semantic segmentation.</description>
@@ -80,7 +80,7 @@
 	<scm>
 		<connection>scm:git:git://github.com/hadim/Fiji_MaskRCNN</connection>
 		<developerConnection>scm:git:git@github.com:hadim/Fiji_MaskRCNN</developerConnection>
-		<tag>HEAD</tag>
+		<tag>Fiji_MaskRCNN-0.3.8</tag>
 		<url>https://github.com/hadim/Fiji_MaskRCNN</url>
 	</scm>
 	<issueManagement>
