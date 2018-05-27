@@ -89,7 +89,7 @@ public class ObjectsDetector implements Command {
 	private String modelName = null;
 
 	@Parameter
-	private Dataset inputDataset;
+	private Dataset dataset;
 
 	@Parameter(type = ItemIO.OUTPUT)
 	private List<Roi> roisList;
@@ -162,8 +162,8 @@ public class ObjectsDetector implements Command {
 
 		// How many images to process ?
 		long nImages;
-		if (this.inputDataset.numDimensions() == 3) {
-			nImages = this.inputDataset.dimension(2);
+		if (this.dataset.numDimensions() == 3) {
+			nImages = this.dataset.dimension(2);
 		}
 		else {
 			nImages = 1;
@@ -294,12 +294,12 @@ public class ObjectsDetector implements Command {
 	}
 
 	private Dataset getStack(int position) {
-		if (this.inputDataset.numDimensions() == 3) {
-			return ds.create((RandomAccessibleInterval) ops.transform().hyperSliceView(this.inputDataset,
+		if (this.dataset.numDimensions() == 3) {
+			return ds.create((RandomAccessibleInterval) ops.transform().hyperSliceView(this.dataset,
 				2, position));
 		}
 		else {
-			return this.inputDataset;
+			return this.dataset;
 		}
 	}
 
@@ -472,21 +472,21 @@ public class ObjectsDetector implements Command {
 		}
 
 		AxisType[] axisTypes = new AxisType[] { Axes.X, Axes.Y, Axes.TIME };
-		String maskName = "Masks of " + this.inputDataset.getName();
+		String maskName = "Masks of " + this.dataset.getName();
 		ImgPlus<T> imgPlus = new ImgPlus(ds.create(im), maskName, axisTypes);
 		return ds.create(imgPlus);
 	}
 
 	public void checkInput() throws Exception {
-		if (this.inputDataset.numDimensions() != 2 && this.inputDataset.numDimensions() != 3) {
+		if (this.dataset.numDimensions() != 2 && this.dataset.numDimensions() != 3) {
 			throw new Exception("Input image must have 2 or 3 dimensions.");
 		}
 
 		int maxSize = (int) this.parameters.get("image_max_dimension");
-		if (this.inputDataset.dimension(0) > maxSize) {
+		if (this.dataset.dimension(0) > maxSize) {
 			throw new Exception("Width cannot be greater than " + maxSize + " pixels.");
 		}
-		if (this.inputDataset.dimension(1) > maxSize) {
+		if (this.dataset.dimension(1) > maxSize) {
 			throw new Exception("Height cannot be greater than " + maxSize + " pixels.");
 		}
 	}

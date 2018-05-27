@@ -38,7 +38,7 @@ public class TestPlugin {
 		Map<String, Object> inputs = new HashMap<>();
 		inputs.put("model", model);
 		inputs.put("modelName", null);
-		inputs.put("inputDataset", dataset);
+		inputs.put("dataset", dataset);
 		ij.command().run(ObjectsDetector.class, true, inputs);
 
 	}

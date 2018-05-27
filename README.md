@@ -25,9 +25,9 @@ Note that you can also run the prediction from pure Python with [this notebook](
 
 The inputs consist of:
 
-- `inputDataset`: An image (only 2D at the moment, stacks would be allowed in the future).
+- `dataset`: An image that can be 2D or 3D.
 
-- `modelURL` or `modelPath`: A model as a ZIP file (can be a filepath or an URL). The file contains:
+- `model`: A model as a ZIP file (can be a filepath or an URL). The file contains:
 
     - `model.pb`: The Mask RCNN graph used for object detection. 
     - `preprocessing_graph.pb`: The graph performing preprocessing on the input image.
@@ -53,7 +53,7 @@ from sc.fiji.maskrcnn import ObjectsDetector
 
 inputs = {"model": None,
           "modelName": "Microtubule",
-          "inputDataset": data}
+          "dataset": data}
 module = ms.waitFor(cs.run(ObjectsDetector, True, inputs))
 
 rois = module.getOutput("roisList")
