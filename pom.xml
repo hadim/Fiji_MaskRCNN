@@ -63,8 +63,7 @@
 		<license.copyrightOwners>Hadrien Mary</license.copyrightOwners>
 
 		<!-- Override tensorflow version -->
-		<tensorflow.version>1.7.0</tensorflow.version>
-
+		<tensorflow.version>1.8.0</tensorflow.version>
 
 		<!-- NB: Deploy releases to the ImageJ Maven repository. -->
 		<releaseProfiles>deploy-to-imagej</releaseProfiles>
