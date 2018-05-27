@@ -29,5 +29,6 @@ dependencies:
     - pycocotools
     - tensorflow-gpu
     - tensorboard
+    - quilt
     - https://github.com/matterport/Mask_RCNN/archive/master.zip
     - https://github.com/hadim/simuscope/archive/master.zip
