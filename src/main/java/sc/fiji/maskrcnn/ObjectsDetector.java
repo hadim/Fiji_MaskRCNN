@@ -72,7 +72,7 @@ public class ObjectsDetector implements Command {
 	private StatusService ss;
 
 	@Parameter(visibility = ItemVisibility.MESSAGE, required = false)
-	private final String header = "You can select the model from 3 different sources.";
+	private final String header = "You can select the model from 2 different sources.";
 
 	@Parameter(required = false, label = "Model Location (URL or filepath to a ZIP file)",
 		description = "The location to the model as a ZIP file. It can be an URL or a filepath.")
