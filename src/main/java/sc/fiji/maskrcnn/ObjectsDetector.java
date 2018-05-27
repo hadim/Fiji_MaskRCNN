@@ -49,6 +49,9 @@ import org.yaml.snakeyaml.Yaml;
 import ij.ImagePlus;
 import ij.gui.Roi;
 import ij.plugin.frame.RoiManager;
+import sc.fiji.maskrcnn.commands.MaskRCNNDetector;
+import sc.fiji.maskrcnn.commands.MaskRCNNPostprocessImage;
+import sc.fiji.maskrcnn.commands.MaskRCNNPreprocessImage;
 
 @Plugin(type = Command.class, menuPath = "Plugins>Detection>Mask RCNN Detector", headless = true)
 public class ObjectsDetector implements Command {
@@ -308,7 +311,7 @@ public class ObjectsDetector implements Command {
 		inputs.put("clearModel", false);
 
 		// Disable postprocessing of the SciJava command.
-		CommandInfo command = ij.command().getCommand(PreprocessImage.class);
+		CommandInfo command = ij.command().getCommand(MaskRCNNPreprocessImage.class);
 		List<PreprocessorPlugin> pre = ij.plugin().createInstancesOfType(PreprocessorPlugin.class);
 		Module module = ij.module().waitFor(ij.module().run(command, pre, null, inputs));
 		return module;
@@ -326,7 +329,7 @@ public class ObjectsDetector implements Command {
 		inputs.put("clearModel", false);
 
 		// Disable postprocessing of the SciJava command.
-		CommandInfo command = ij.command().getCommand(Detector.class);
+		CommandInfo command = ij.command().getCommand(MaskRCNNDetector.class);
 		List<PreprocessorPlugin> pre = ij.plugin().createInstancesOfType(PreprocessorPlugin.class);
 		Module module = ij.module().waitFor(ij.module().run(command, pre, null, inputs));
 		return module;
@@ -346,7 +349,7 @@ public class ObjectsDetector implements Command {
 		inputs.put("clearModel", false);
 
 		// Disable postprocessing of the SciJava command.
-		CommandInfo command = ij.command().getCommand(PostprocessImage.class);
+		CommandInfo command = ij.command().getCommand(MaskRCNNPostprocessImage.class);
 		List<PreprocessorPlugin> pre = ij.plugin().createInstancesOfType(PreprocessorPlugin.class);
 		Module module = ij.module().waitFor(ij.module().run(command, pre, null, inputs));
 		return module;

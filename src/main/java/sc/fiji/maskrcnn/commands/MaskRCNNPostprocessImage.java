@@ -1,5 +1,5 @@
 
-package sc.fiji.maskrcnn;
+package sc.fiji.maskrcnn.commands;
 
 import java.util.Arrays;
 import java.util.HashMap;
@@ -12,10 +12,13 @@ import org.scijava.io.location.Location;
 import org.scijava.plugin.Parameter;
 import org.scijava.plugin.Plugin;
 import org.tensorflow.Session.Runner;
+
+import sc.fiji.maskrcnn.AbstractPredictor;
+
 import org.tensorflow.Tensor;
 
 @Plugin(type = Command.class, headless = true)
-public class PostprocessImage extends AbstractPredictor implements Command {
+public class MaskRCNNPostprocessImage extends AbstractPredictor implements Command {
 
 	private static final String MODEL_FILENAME = "postprocessing_graph.pb";
 

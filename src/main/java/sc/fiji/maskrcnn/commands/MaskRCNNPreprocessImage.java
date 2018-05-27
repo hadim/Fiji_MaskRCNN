@@ -1,5 +1,5 @@
 
-package sc.fiji.maskrcnn;
+package sc.fiji.maskrcnn.commands;
 
 import java.io.File;
 import java.io.FileInputStream;
@@ -26,8 +26,12 @@ import org.tensorflow.Session.Runner;
 import org.tensorflow.Tensor;
 import org.yaml.snakeyaml.Yaml;
 
+import sc.fiji.maskrcnn.AbstractPredictor;
+import sc.fiji.maskrcnn.CustomDownloadService;
+import sc.fiji.maskrcnn.Utils;
+
 @Plugin(type = Command.class, headless = true)
-public class PreprocessImage extends AbstractPredictor implements Command {
+public class MaskRCNNPreprocessImage extends AbstractPredictor implements Command {
 
 	private static final String MODEL_FILENAME = "preprocessing_graph.pb";
 
