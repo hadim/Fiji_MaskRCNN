@@ -113,6 +113,13 @@
 			<groupId>net.imagej</groupId>
 			<artifactId>imagej-tensorflow</artifactId>
 		</dependency>
+		
+		<!--For tracking. -->
+		<dependency>
+			<groupId>>sc.fiji</groupId>
+			<artifactId>TrackMate_</artifactId>
+			<version>1.21</version>
+		</dependency>
 
 		<!-- https://mvnrepository.com/artifact/org.apache.commons/commons-io -->
 		<dependency>

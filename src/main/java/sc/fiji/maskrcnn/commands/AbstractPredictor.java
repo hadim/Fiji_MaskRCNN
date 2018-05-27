@@ -1,5 +1,5 @@
 
-package sc.fiji.maskrcnn;
+package sc.fiji.maskrcnn.commands;
 
 import java.io.IOException;
 import java.util.List;

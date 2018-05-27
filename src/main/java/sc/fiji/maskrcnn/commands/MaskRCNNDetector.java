@@ -13,7 +13,6 @@ import org.scijava.plugin.Parameter;
 import org.scijava.plugin.Plugin;
 import org.tensorflow.Session.Runner;
 
-import sc.fiji.maskrcnn.AbstractPredictor;
 import sc.fiji.maskrcnn.TensorUtils;
 
 import org.tensorflow.Tensor;

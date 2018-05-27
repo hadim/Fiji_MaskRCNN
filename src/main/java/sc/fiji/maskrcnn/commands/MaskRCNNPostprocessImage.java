@@ -12,9 +12,6 @@ import org.scijava.io.location.Location;
 import org.scijava.plugin.Parameter;
 import org.scijava.plugin.Plugin;
 import org.tensorflow.Session.Runner;
-
-import sc.fiji.maskrcnn.AbstractPredictor;
-
 import org.tensorflow.Tensor;
 
 @Plugin(type = Command.class, headless = true)

@@ -26,7 +26,6 @@ import org.tensorflow.Session.Runner;
 import org.tensorflow.Tensor;
 import org.yaml.snakeyaml.Yaml;
 
-import sc.fiji.maskrcnn.AbstractPredictor;
 import sc.fiji.maskrcnn.CustomDownloadService;
 import sc.fiji.maskrcnn.Utils;
 
