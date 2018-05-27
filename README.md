@@ -8,6 +8,8 @@ The trained model is generated using [this Tensorflow implementation](https://gi
 
 If you build a model using this project and you think can be useful to others please contact me. I could add an URL to your model in the Fiji plugin.
 
+Note that you can also run the prediction from pure Python with [this notebook](./training/Notebooks/7_Prediction.ipynb).
+
 ## Usage
 
 - Start [Fiji](https://imagej.net/Fiji/Downloads).

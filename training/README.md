@@ -19,3 +19,5 @@ It is suggested to use the [Python distribution Anaconda](https://www.anaconda.c
 - [5_Convert_Model_To_TensorFlow](./Notebooks/5_Convert_Model_To_TensorFlow.ipynb): Convert the trained model in a TensorFlow compatible format and embed it with pre- and post-processing graphs in a ZIP file.
 
 - [6_Predict_From_SavedModel](./Notebooks/6_Predict_From_SavedModel.ipynb): Use the converted TensorFlow model to run prediction.
+
+- [7_Prediction](./Notebooks/7_Prediction.ipynb): Easy prediction.
