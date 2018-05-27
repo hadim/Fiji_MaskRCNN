@@ -116,9 +116,8 @@
 		
 		<!--For tracking. -->
 		<dependency>
-			<groupId>>sc.fiji</groupId>
+			<groupId>sc.fiji</groupId>
 			<artifactId>TrackMate_</artifactId>
-			<version>1.21</version>
 		</dependency>
 
 		<!-- https://mvnrepository.com/artifact/org.apache.commons/commons-io -->
