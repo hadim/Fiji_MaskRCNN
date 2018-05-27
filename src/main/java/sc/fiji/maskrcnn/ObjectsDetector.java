@@ -5,6 +5,8 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.net.MalformedURLException;
+import java.net.URL;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -72,23 +74,16 @@ public class ObjectsDetector implements Command {
 	@Parameter(visibility = ItemVisibility.MESSAGE, required = false)
 	private final String header = "You can select the model from 3 different sources.";
 
-	@Parameter(required = false, label = "Model URL",
-		description = "The URL to the model as a ZIP file. It will be downloaded and cached to your disk.")
-	private String modelURL = null;
+	@Parameter(required = false, label = "Model Location (URL or filepath to a ZIP file)",
+		description = "The location to the model as a ZIP file. It can be an URL or a filepath.")
+	private String model = null;
 
 	@Parameter(visibility = ItemVisibility.MESSAGE, required = false)
 	private final String or1 = "or";
 
-	@Parameter(required = false, label = "Model File Path",
-		description = "The filepath to the model as a ZIP file.")
-	private String modelPath = null;
-
-	@Parameter(visibility = ItemVisibility.MESSAGE, required = false)
-	private final String or2 = "or";
-
 	@Parameter(choices = { "---", "Microtubule" }, required = false, label = "Packaged Models",
 		description = "A list of prepackaged models.")
-	private String modelNameToUse = null;
+	private String modelName = null;
 
 	@Parameter
 	private Dataset inputDataset;
@@ -123,27 +118,26 @@ public class ObjectsDetector implements Command {
 		try {
 
 			// Get model location
-			if (modelURL == null || modelURL.equals("")) {
-				if (modelPath == null || modelPath.equals("")) {
-
-					if (modelNameToUse == null) {
-						throw new Exception("modelURL, modelPath or modelNameToUse, needs to be provided.");
-					}
-
-					else if (AVAILABLE_MODELS.containsKey(modelNameToUse)) {
-						this.modelLocation = new HTTPLocation(AVAILABLE_MODELS.get(modelNameToUse));
+			if (model != null && !model.equals("")) {
+				try {
+					URL url = new URL(model);
+					this.modelLocation = new HTTPLocation(url.toURI());
+				}
+				catch (MalformedURLException e) {
+					File modelFile = new File(model);
+					if (modelFile.exists() && !modelFile.isDirectory()) {
+						this.modelLocation = new FileLocation(modelFile);
 					}
 					else {
-						throw new Exception("You need to select a valid prepackaged models.");
+						throw new Exception("model is neither an URL or a valid filepath.");
 					}
-
-				}
-				else {
-					this.modelLocation = new FileLocation(modelPath);
 				}
 			}
+			else if (AVAILABLE_MODELS.containsKey(modelName)) {
+				this.modelLocation = new HTTPLocation(AVAILABLE_MODELS.get(modelName));
+			}
 			else {
-				this.modelLocation = new HTTPLocation(modelURL);
+				throw new Exception("You need to select a valid prepackaged models.");
 			}
 
 			// Get a name used for caching the model.

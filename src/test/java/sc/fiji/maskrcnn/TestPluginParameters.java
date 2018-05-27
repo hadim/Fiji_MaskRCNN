@@ -2,21 +2,15 @@
 package sc.fiji.maskrcnn;
 
 import java.io.IOException;
-import java.net.URISyntaxException;
 
 import net.imagej.ImageJ;
 
 public class TestPluginParameters {
 
-	public static void main(String[] args) throws IOException, URISyntaxException {
-
-		final String modelURL =
-			"https://github.com/hadim/Fiji_MaskRCNN/releases/download/Fiji_MaskRCNN-0.3.3/tf_model_coco_512_new.zip";
-		final String modelPath =
-			"/home/hadim/Drive/Data/Neural_Network/Mask-RCNN/Microtubules/saved_model/tf_model_coco_512_new.zip";
+	public static void main(String[] args) throws IOException {
 
 		final ImageJ ij = new ImageJ();
-		ij.launch(args);
+		ij.ui().showUI();
 
 		// Open an image and display it.
 		String imagePath = "/home/hadim/Documents/Code/Postdoc/ij/testdata/";
