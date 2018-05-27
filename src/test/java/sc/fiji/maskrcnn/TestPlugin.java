@@ -29,7 +29,7 @@ public class TestPlugin {
 		// imagePath = basePath + "Cell_Colony-1.tif";
 		// imagePath = basePath + "FakeTracks.tif";
 		// imagePath = basePath + "Cell_Colony.tif";
-		imagePath = basePath + "Spindle-1-Frame.tif";
+		//imagePath = basePath + "Spindle-1-Frame.tif";
 		// imagePath = basePath + "Spindle-1-Frame-Small.tif";
 
 		final Object dataset = ij.io().open(imagePath);
