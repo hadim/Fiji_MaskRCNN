@@ -151,11 +151,6 @@
 			<scope>test</scope>
 		</dependency>
 
-
-		<!-- See https://github.com/scijava/scijava-common/issues/314 -->
-		<!-- <dependency> <groupId>net.imagej</groupId> <artifactId>imagej-plugins-io-table</artifactId> 
-			<version>0.0.1-SNAPSHOT</version> </dependency> -->
-
 	</dependencies>
 
 	<repositories>
