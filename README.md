@@ -39,7 +39,7 @@ The inputs consist of:
 The outputs consist of:
 
 - `table`: A table containing the coordinates of the bounding boxes of detected objects as well as its score and class label.
-- `masksImage`: An image mask.
+- `masks`: An image mask.
 
 ## Scripting
 
@@ -58,9 +58,39 @@ inputs = {"model": None,
           "fillROIManager": True}}
 module = ms.waitFor(cs.run(ObjectsDetector, True, inputs))
 
-rois = module.getOutput("roisList")
 table = module.getOutput("table")
-masks = module.getOutput("masksImage")
+masks = module.getOutput("masks")
+```
+
+The plugin also comes with an object tracker based on the centroid of the detected masks:
+
+```python
+# @Dataset data
+# @CommandService cs
+# @ModuleService ms
+
+from sc.fiji.maskrcnn import ObjectsDetector
+from sc.fiji.maskrcnn import ObjectsTracker
+
+inputs = {"model": None,
+          "modelName": "Microtubule",
+          "dataset": data,
+          "fillROIManager": True}
+module = ms.waitFor(cs.run(ObjectsDetector, True, inputs))
+
+table = module.getOutput("table")
+masks = module.getOutput("masks")
+
+inputs = {"masks": masks,
+          "table": table,
+          "linkingMaxDistance": 10,
+          "gapClosingMaxDistance": 10,
+          "maxFrameGap": 5,
+          "fillROIManager": True}
+          
+module = ms.waitFor(cs.run(ObjectsTracker, True, inputs))
+table = module.getOutput("resultTable")
+
 ```
 
 ## Available Models
