@@ -465,12 +465,11 @@ public class ObjectsDetector implements Command {
 			}
 		}
 		else if (AVAILABLE_MODELS.containsKey(modelName)) {
-			this.modelLocation = new HTTPLocation(AVAILABLE_MODELS.get(modelName));
+			return new HTTPLocation(AVAILABLE_MODELS.get(modelName));
 		}
 		else {
 			throw new Exception("You need to select a valid prepackaged models.");
 		}
-		return null;
 	}
 
 }
