@@ -1,5 +1,5 @@
 
-package sc.fiji.maskrcnn.commands;
+package sc.fiji.maskrcnn.internal;
 
 import java.io.File;
 import java.io.FileInputStream;

@@ -1,5 +1,5 @@
 
-package sc.fiji.maskrcnn.commands;
+package sc.fiji.maskrcnn.internal;
 
 import java.util.Arrays;
 import java.util.HashMap;

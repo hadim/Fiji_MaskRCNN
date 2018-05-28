@@ -43,9 +43,9 @@ import org.scijava.plugin.Plugin;
 import org.tensorflow.Tensor;
 import org.yaml.snakeyaml.Yaml;
 
-import sc.fiji.maskrcnn.commands.MaskRCNNDetector;
-import sc.fiji.maskrcnn.commands.MaskRCNNPostprocessImage;
-import sc.fiji.maskrcnn.commands.MaskRCNNPreprocessImage;
+import sc.fiji.maskrcnn.internal.MaskRCNNDetector;
+import sc.fiji.maskrcnn.internal.MaskRCNNPostprocessImage;
+import sc.fiji.maskrcnn.internal.MaskRCNNPreprocessImage;
 
 @Plugin(type = Command.class, menuPath = "Plugins>Mask RCNN>Detect Objects", headless = true)
 public class ObjectsDetector implements Command {
