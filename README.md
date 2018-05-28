@@ -122,9 +122,22 @@ masks = module.getOutput("masks")
 
 ## Available Models
 
-| Objects | Version | Description | URL |
-| --- | --- | --- | --- |
-| Microtubules | 1.0 | Trained with an articially generated dataset. | https://github.com/hadim/Fiji_MaskRCNN/releases/download/Fiji_MaskRCNN-0.4.0/tf_model_microtubule_coco_512.zip
+| Objects | Version | Description | Size | URL |
+| --- | --- | --- | --- | --- |
+| Microtubules | 1.0 | Trained with an articially generated dataset. | 512x512 | [Link](https://github.com/hadim/Fiji_MaskRCNN/releases/download/Fiji_MaskRCNN-0.4.0/tf_model_microtubule_coco_512.zip)
+
+## GPU Support
+
+This type of neural networks are much more faster on GPU than CPU. See the following benchmark where the detector has been run on one image. Note that the size does not matter since the images are padded to the size of the network during preprocessing.
+
+*Test done with `Fiji_MaskRCNN-0.4.8`.*
+
+|Model | Version | Device Type | Device | Platform | Detection of Duration (s) |
+| --- | --- | --- | --- | --- | --- |
+Microtubule | 1.0 | GPU | GeForce GTX 1050 Ti 4 GB | Linux | **2-3** |
+Microtubule | 1.0 | CPU | Intel i7-7700HQ 2.80GHz 8 cores 16 GB | Linux | **10-11** |
+
+To enable GPU support ([only Linux at the moment](https://github.com/tensorflow/tensorflow/issues/16660)), you need to manually remove `libtensorflow_jni-1.8.0.jar` from the `jars` folder in your Fiji folder and copy [`libtensorflow_jni_gpu-1.8.0.jar`](http://central.maven.org/maven2/org/tensorflow/libtensorflow_jni_gpu/1.8.0/libtensorflow_jni_gpu-1.8.0.jar) instead.
 
 ## Authors
 
