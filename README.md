@@ -34,9 +34,10 @@ The inputs consist of:
     - `postprocessing_graph.pb`: The graph that rescale the outputs of the Mask RCNN prediction.
     - `parameters.yml`: A YAML file that contain hyper-parameters of the model such as label names and maximum image size.
     
+- `fillROIManager`: Fill the ROI Manager with the detected bounding boxes.
+
 The outputs consist of:
 
-- `roisList`: A list of Imagej1 `Roi` (the RoiManager is also populated). Each roi contains its class id and score in its name.
 - `table`: A table containing the coordinates of the bounding boxes of detected objects as well as its score and class label.
 - `masksImage`: An image mask.
 
@@ -53,7 +54,8 @@ from sc.fiji.maskrcnn import ObjectsDetector
 
 inputs = {"model": None,
           "modelName": "Microtubule",
-          "dataset": data}
+          "dataset": data,
+          "fillROIManager": True}}
 module = ms.waitFor(cs.run(ObjectsDetector, True, inputs))
 
 rois = module.getOutput("roisList")

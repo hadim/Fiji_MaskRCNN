@@ -20,10 +20,7 @@ import net.imagej.axis.Axes;
 import net.imagej.axis.AxisType;
 import net.imagej.ops.OpService;
 import net.imagej.table.DefaultGenericTable;
-import net.imagej.table.DoubleColumn;
-import net.imagej.table.GenericColumn;
 import net.imagej.table.GenericTable;
-import net.imagej.table.IntColumn;
 import net.imagej.tensorflow.TensorFlowService;
 import net.imglib2.RandomAccessibleInterval;
 import net.imglib2.type.numeric.RealType;
@@ -46,9 +43,6 @@ import org.scijava.plugin.Plugin;
 import org.tensorflow.Tensor;
 import org.yaml.snakeyaml.Yaml;
 
-import ij.ImagePlus;
-import ij.gui.Roi;
-import ij.plugin.frame.RoiManager;
 import sc.fiji.maskrcnn.commands.MaskRCNNDetector;
 import sc.fiji.maskrcnn.commands.MaskRCNNPostprocessImage;
 import sc.fiji.maskrcnn.commands.MaskRCNNPreprocessImage;
@@ -91,14 +85,14 @@ public class ObjectsDetector implements Command {
 	@Parameter
 	private Dataset dataset;
 
-	@Parameter(type = ItemIO.OUTPUT)
-	private List<Roi> roisList;
+	@Parameter(required = false)
+	private boolean fillROIManager = false;
 
 	@Parameter(type = ItemIO.OUTPUT)
 	private GenericTable table;
 
 	@Parameter(type = ItemIO.OUTPUT)
-	private Dataset masksImage;
+	private Dataset masks;
 
 	@Parameter
 	protected TensorFlowService tfService;
@@ -275,16 +269,19 @@ public class ObjectsDetector implements Command {
 
 		// Format and return outputs.
 		if (nDetectedObjects == 0) {
-			this.roisList = new ArrayList<Roi>();
 			this.table = new DefaultGenericTable();
-			this.masksImage = null;
+			this.masks = null;
 		}
 		else {
-			this.masksImage = this.createMaskImage(postprocessOutputsMap.get("masks"));
-			this.roisList = this.fillRoiManager(postprocessOutputsMap.get("rois"), postprocessOutputsMap
-				.get("scores"), postprocessOutputsMap.get("class_ids"));
+			this.masks = this.createMaskImage(postprocessOutputsMap.get("masks"));
+
 			this.table = this.fillTable(postprocessOutputsMap.get("rois"), postprocessOutputsMap.get(
 				"scores"), postprocessOutputsMap.get("class_ids"), classLabels);
+
+			if (fillROIManager) {
+				Utils.fillROIManager(this.table);
+			}
+
 		}
 
 		log.info(nDetectedObjects + " objects detected.");
@@ -295,8 +292,8 @@ public class ObjectsDetector implements Command {
 
 	private Dataset getStack(int position) {
 		if (this.dataset.numDimensions() == 3) {
-			return ds.create((RandomAccessibleInterval) ops.transform().hyperSliceView(this.dataset,
-				2, position));
+			return ds.create((RandomAccessibleInterval) ops.transform().hyperSliceView(this.dataset, 2,
+				position));
 		}
 		else {
 			return this.dataset;
@@ -355,60 +352,22 @@ public class ObjectsDetector implements Command {
 		return module;
 	}
 
-	protected List<Roi> fillRoiManager(List<Tensor<?>> rois, List<Tensor<?>> scores,
-		List<Tensor<?>> classIds)
-	{
-		// TODO: output masks as polygons ? (need a marching cube-like algorithm.)
-
-		RoiManager rm = RoiManager.getRoiManager();
-		rm.reset();
-
-		List<Roi> roisList = new ArrayList<>();
-		Roi box = null;
-		int x1, y1, x2, y2;
-		int id = 0;
-
-		for (int n = 0; n < rois.size(); n++) {
-			int nRois = (int) rois.get(n).shape()[0];
-			int nCoords = (int) rois.get(n).shape()[1];
-			int[][] roisArray = rois.get(n).copyTo(new int[nRois][nCoords]);
-
-			float[] scoresArray = scores.get(n).copyTo(new float[(int) scores.get(n).shape()[0]]);
-			int[] classIdsArray = classIds.get(n).copyTo(new int[(int) classIds.get(n).shape()[0]]);
-
-			for (int i = 0; i < roisArray.length; i++) {
-				x1 = roisArray[i][0];
-				y1 = roisArray[i][1];
-				x2 = roisArray[i][2];
-				y2 = roisArray[i][3];
-				box = new Roi(y1, x1, y2 - y1, x2 - x1);
-				box.setPosition(n + 1);
-				box.setName("BBox-" + id + "-Score-" + scoresArray[i] + "-ClassID-" + classIdsArray[i] +
-					"-Frame-" + n);
-				rm.add((ImagePlus) null, box, n + 1);
-				roisList.add(box);
-				id++;
-			}
-		}
-
-		return roisList;
-	}
-
 	protected GenericTable fillTable(List<Tensor<?>> rois, List<Tensor<?>> scores,
 		List<Tensor<?>> classIds, List<String> classLabels)
 	{
 
 		GenericTable table = new DefaultGenericTable();
 
-		table.add(new IntColumn("id"));
-		table.add(new IntColumn("frame"));
-		table.add(new IntColumn("class_id"));
-		table.add(new GenericColumn("class_label"));
-		table.add(new DoubleColumn("score"));
-		table.add(new IntColumn("x"));
-		table.add(new IntColumn("y"));
-		table.add(new IntColumn("width"));
-		table.add(new IntColumn("height"));
+		table.appendColumn("id");
+		table.appendColumn("id");
+		table.appendColumn("frame");
+		table.appendColumn("class_id");
+		table.appendColumn("class_label");
+		table.appendColumn("score");
+		table.appendColumn("x");
+		table.appendColumn("y");
+		table.appendColumn("width");
+		table.appendColumn("height");
 
 		int x1, y1, x2, y2;
 		int lastRow = 0;
@@ -430,15 +389,15 @@ public class ObjectsDetector implements Command {
 				y2 = roisArray[i][3];
 				table.appendRow();
 				lastRow = table.getRowCount() - 1;
-				table.set("id", lastRow, id);
-				table.set("frame", lastRow, n);
-				table.set("class_id", lastRow, classIdsArray[i]);
-				table.set("class_label", lastRow, classLabels.get(classIdsArray[i]));
-				table.set("score", lastRow, (double) scoresArray[i]);
-				table.set("x", lastRow, y1);
-				table.set("y", lastRow, x1);
-				table.set("width", lastRow, y2 - y1);
-				table.set("height", lastRow, x2 - x1);
+				table.set("id", lastRow, String.valueOf(id));
+				table.set("frame", lastRow, String.valueOf(n));
+				table.set("class_id", lastRow, String.valueOf(classIdsArray[i]));
+				table.set("class_label", lastRow, String.valueOf(classLabels.get(classIdsArray[i])));
+				table.set("score", lastRow, String.valueOf(scoresArray[i]));
+				table.set("x", lastRow, String.valueOf(y1));
+				table.set("y", lastRow, String.valueOf(x1));
+				table.set("width", lastRow, String.valueOf(y2 - y1));
+				table.set("height", lastRow, String.valueOf(x2 - x1));
 				id++;
 			}
 		}
