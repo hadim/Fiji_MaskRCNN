@@ -1,5 +1,5 @@
 
-package sc.fiji.maskrcnn.tracking;
+package sc.fiji.maskrcnn;
 
 import java.io.IOException;
 import java.net.URL;
@@ -36,10 +36,9 @@ import fiji.plugin.trackmate.tracking.LAPUtils;
 import fiji.plugin.trackmate.tracking.SpotTracker;
 import fiji.plugin.trackmate.tracking.SpotTrackerFactory;
 import fiji.plugin.trackmate.tracking.sparselap.SparseLAPTrackerFactory;
-import sc.fiji.maskrcnn.Utils;
 
 @Plugin(type = Command.class, headless = true)
-public class ObjectTracker<T> implements Command {
+public class ObjectsTracker implements Command {
 
 	@Parameter
 	private LogService log;

@@ -107,7 +107,6 @@ public class Utils {
 			roi = new Roi(x, y, width, height);
 			roi.setPosition(frame + 1);
 			roi.setName("BBox-" + id + "-Score-" + score + "-ClassID-" + classID + "-Frame-" + frame);
-			// roi.setName(String.valueOf(id));
 
 			try {
 				objectID = Integer.valueOf((String) table.get("object_id", row));

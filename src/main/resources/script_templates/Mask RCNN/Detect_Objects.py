@@ -11,4 +11,4 @@ inputs = {"model": None,
 module = ms.waitFor(cs.run(ObjectsDetector, True, inputs))
 
 table = module.getOutput("table")
-masks = module.getOutput("masksImage")
+masks = module.getOutput("masks")

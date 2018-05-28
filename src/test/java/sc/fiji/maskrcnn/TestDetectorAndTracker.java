@@ -8,12 +8,11 @@ import java.util.concurrent.ExecutionException;
 
 import net.imagej.Dataset;
 import net.imagej.ImageJ;
-import net.imagej.table.CommonsCSVTableIOPlugin;
 import net.imagej.table.GenericTable;
 
 import org.scijava.command.CommandModule;
 
-public class TestPlugin {
+public class TestDetectorAndTracker {
 
 	public static void main(String[] args) throws IOException {
 
@@ -35,31 +34,31 @@ public class TestPlugin {
 		// imagePath = basePath + "Spindle-1-Frame.tif";
 		// imagePath = basePath + "Spindle-1-Frame-Small.tif";
 
-		String maskPath = basePath + "Masks-of-seed-small-10-frames.tif";
-		String tablePath = basePath + "Masks-of-seed-small-10-frames.csv";
-
 		final Object dataset = ij.io().open(imagePath);
 		ij.ui().show(dataset);
 
-		// Set parameters
-		Map<String, Object> inputs = new HashMap<>();
-		inputs.put("model", model);
-		inputs.put("modelName", null);
-		inputs.put("dataset", dataset);
-		inputs.put("fillROIManager", true);
-
 		try {
 
-			// Run command and get results
+			// Detect objects
+			Map<String, Object> inputs = new HashMap<>();
+			inputs.put("model", model);
+			inputs.put("modelName", null);
+			inputs.put("dataset", dataset);
+			inputs.put("fillROIManager", true);
 			CommandModule module = ij.command().run(ObjectsDetector.class, true, inputs).get();
-			Dataset mask = (Dataset) module.getOutput("masks");
+
+			Dataset masks = (Dataset) module.getOutput("masks");
 			GenericTable table = (GenericTable) module.getOutput("table");
 
-			// Save results
-			CommonsCSVTableIOPlugin tableIOPlugin = new CommonsCSVTableIOPlugin();
-			tableIOPlugin.save(table, tablePath);
-			ij.io().save(mask, maskPath);
-
+			// Track objects
+			inputs = new HashMap<>();
+			inputs.put("masks", masks);
+			inputs.put("table", table);
+			inputs.put("linkingMaxDistance", 10.0);
+			inputs.put("gapClosingMaxDistance", 10.0);
+			inputs.put("maxFrameGap", 5);
+			inputs.put("fillROIManager", true);
+			module = ij.command().run(ObjectsTracker.class, true, inputs).get();
 		}
 		catch (InterruptedException | ExecutionException exc) {
 			exc.printStackTrace();
