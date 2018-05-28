@@ -269,7 +269,10 @@ public class ObjectsDetector implements Command {
 		}
 
 		// Clean TensorFlow objects.
-		tfService.dispose();
+		// TODO: Calling dispose seems to destroy all the tensors and so the ImageJ
+		// image and various array creating from them. On the other side if dispose
+		// is not called, sometime closing Fiji does not work.
+		// tfService.dispose();
 
 		log.info(nDetectedObjects + " objects detected.");
 		log.info("Detection done");
