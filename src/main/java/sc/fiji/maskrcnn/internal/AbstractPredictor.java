@@ -39,8 +39,7 @@ public abstract class AbstractPredictor {
 			return tfService.loadLabels(modelLocation, modelName, fname);
 		}
 		catch (IOException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
+			log.error(e);
 		}
 		return null;
 	}

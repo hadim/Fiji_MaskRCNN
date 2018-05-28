@@ -115,27 +115,7 @@ public class ObjectsDetector implements Command {
 		try {
 
 			// Get model location
-			if (model != null && !model.equals("")) {
-				try {
-					URL url = new URL(model);
-					this.modelLocation = new HTTPLocation(url.toURI());
-				}
-				catch (MalformedURLException e) {
-					File modelFile = new File(model);
-					if (modelFile.exists() && !modelFile.isDirectory()) {
-						this.modelLocation = new FileLocation(modelFile);
-					}
-					else {
-						throw new Exception("model is neither an URL or a valid filepath.");
-					}
-				}
-			}
-			else if (AVAILABLE_MODELS.containsKey(modelName)) {
-				this.modelLocation = new HTTPLocation(AVAILABLE_MODELS.get(modelName));
-			}
-			else {
-				throw new Exception("You need to select a valid prepackaged models.");
-			}
+			this.modelLocation = this.getModelLocation();
 
 			// Get a name used for caching the model.
 			this.modelnameCache = FilenameUtils.getBaseName(modelLocation.getURI().toString());
@@ -143,7 +123,10 @@ public class ObjectsDetector implements Command {
 			// Load the ZIP model file to access the parameters.
 			this.loadParameters();
 
+			// Check input parameters
 			this.checkInput();
+
+			// Detect Objects
 			this.runPrediction();
 
 		}
@@ -169,8 +152,7 @@ public class ObjectsDetector implements Command {
 		double elapsedTime;
 
 		// Preprocess the image.
-		log.info("Preprocessing image...");
-		ss.showStatus(0, 100, "Preprocessing image.");
+		log.info("Preprocessing image.");
 		startTime = System.currentTimeMillis();
 
 		Module preprocessModule;
@@ -185,6 +167,8 @@ public class ObjectsDetector implements Command {
 		preprocessingOutputsMap.put("imageShape", new ArrayList<>());
 
 		for (int i = 0; i < nImages; i++) {
+			ss.showStatus(i, (int) nImages, "Preprocessing image.");
+
 			// Get a 2D image and run it.
 			twoDImage = this.getStack(i);
 			preprocessModule = this.preprocessSingleImage(twoDImage);
@@ -202,8 +186,7 @@ public class ObjectsDetector implements Command {
 		log.info("Preprocessing done. It tooks " + elapsedTime / 1000 + " s.");
 
 		// Detect objects.
-		log.info("Running detection...");
-		ss.showStatus(33, 100, "Running detection.");
+		log.info("Running detection.");
 		startTime = System.currentTimeMillis();
 
 		Module detectionModule;
@@ -216,6 +199,8 @@ public class ObjectsDetector implements Command {
 		detectionOutputsMap.put("rois", new ArrayList<>());
 
 		for (int i = 0; i < nImages; i++) {
+			ss.showStatus(i, (int) nImages, "Running detection.");
+
 			// Get a 2D image and run it.
 			twoDImage = this.getStack(i);
 			detectionModule = this.detectSingleImage(preprocessingOutputsMap.get("moldedImage").get(i),
@@ -233,8 +218,7 @@ public class ObjectsDetector implements Command {
 		log.info("Detection done. It tooks " + elapsedTime / 1000 + " s.");
 
 		// Postprocess results.
-		log.info("Postprocessing results...");
-		ss.showStatus(66, 100, "Postprocessing results.");
+		log.info("Postprocessing results.");
 		startTime = System.currentTimeMillis();
 
 		Module postprocessModule;
@@ -247,6 +231,8 @@ public class ObjectsDetector implements Command {
 		postprocessOutputsMap.put("masks", new ArrayList<>());
 
 		for (int i = 0; i < nImages; i++) {
+			ss.showStatus(i, (int) nImages, "Postprocessing results.");
+
 			// Get a 2D image and run it.
 			twoDImage = this.getStack(i);
 			postprocessModule = this.postprocessSingleImage(detectionOutputsMap.get("detections").get(i),
@@ -264,6 +250,9 @@ public class ObjectsDetector implements Command {
 		elapsedTime = stopTime - startTime;
 		log.info("Postprocessing done. It tooks " + elapsedTime / 1000 + " s.");
 
+		// Clean TensorFlow objects.
+		tfService.dispose();
+
 		int nDetectedObjects = postprocessOutputsMap.get("scores").stream().mapToInt(
 			tensor -> (int) tensor.shape()[0]).sum();
 
@@ -273,21 +262,18 @@ public class ObjectsDetector implements Command {
 			this.masks = null;
 		}
 		else {
-			this.masks = this.createMaskImage(postprocessOutputsMap.get("masks"));
-
-			this.table = this.fillTable(postprocessOutputsMap.get("rois"), postprocessOutputsMap.get(
+			this.masks = this.createMasks(postprocessOutputsMap.get("masks"));
+			this.table = this.createTable(postprocessOutputsMap.get("rois"), postprocessOutputsMap.get(
 				"scores"), postprocessOutputsMap.get("class_ids"), classLabels);
 
 			if (fillROIManager) {
 				Utils.fillROIManager(this.table);
 			}
-
 		}
 
 		log.info(nDetectedObjects + " objects detected.");
-
-		ss.showStatus(100, 100, "Done.");
 		log.info("Detection done");
+		ss.showStatus("Detection Done.");
 	}
 
 	private Dataset getStack(int position) {
@@ -352,7 +338,7 @@ public class ObjectsDetector implements Command {
 		return module;
 	}
 
-	protected GenericTable fillTable(List<Tensor<?>> rois, List<Tensor<?>> scores,
+	protected GenericTable createTable(List<Tensor<?>> rois, List<Tensor<?>> scores,
 		List<Tensor<?>> classIds, List<String> classLabels)
 	{
 
@@ -404,7 +390,7 @@ public class ObjectsDetector implements Command {
 		return table;
 	}
 
-	private <T extends RealType<T>> Dataset createMaskImage(List<Tensor<?>> masks) {
+	private <T extends RealType<T>> Dataset createMasks(List<Tensor<?>> masks) {
 
 		RandomAccessibleInterval<T> im;
 
@@ -462,6 +448,29 @@ public class ObjectsDetector implements Command {
 		catch (IOException e) {
 			log.error("Can't read parameters.yml in the ZIP model file: " + e);
 		}
+	}
+
+	private Location getModelLocation() throws Exception {
+		if (model != null && !model.equals("")) {
+			try {
+				URL url = new URL(model);
+				return new HTTPLocation(url.toURI());
+			}
+			catch (MalformedURLException e) {
+				File modelFile = new File(model);
+				if (modelFile.exists() && !modelFile.isDirectory()) {
+					return new FileLocation(modelFile);
+				}
+				throw new Exception("model is neither an URL or a valid filepath.");
+			}
+		}
+		else if (AVAILABLE_MODELS.containsKey(modelName)) {
+			this.modelLocation = new HTTPLocation(AVAILABLE_MODELS.get(modelName));
+		}
+		else {
+			throw new Exception("You need to select a valid prepackaged models.");
+		}
+		return null;
 	}
 
 }
