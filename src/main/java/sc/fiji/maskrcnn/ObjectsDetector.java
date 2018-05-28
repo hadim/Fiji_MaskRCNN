@@ -47,7 +47,7 @@ import sc.fiji.maskrcnn.commands.MaskRCNNDetector;
 import sc.fiji.maskrcnn.commands.MaskRCNNPostprocessImage;
 import sc.fiji.maskrcnn.commands.MaskRCNNPreprocessImage;
 
-@Plugin(type = Command.class, menuPath = "Plugins>Detection>Mask RCNN Detector", headless = true)
+@Plugin(type = Command.class, menuPath = "Plugins>Mask RCNN>Detect Objects", headless = true)
 public class ObjectsDetector implements Command {
 
 	static private Map<String, String> AVAILABLE_MODELS = new HashMap<>();
