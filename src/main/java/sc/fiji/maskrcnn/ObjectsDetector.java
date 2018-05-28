@@ -250,9 +250,6 @@ public class ObjectsDetector implements Command {
 		elapsedTime = stopTime - startTime;
 		log.info("Postprocessing done. It tooks " + elapsedTime / 1000 + " s.");
 
-		// Clean TensorFlow objects.
-		tfService.dispose();
-
 		int nDetectedObjects = postprocessOutputsMap.get("scores").stream().mapToInt(
 			tensor -> (int) tensor.shape()[0]).sum();
 
@@ -270,6 +267,9 @@ public class ObjectsDetector implements Command {
 				Utils.fillROIManager(this.table);
 			}
 		}
+
+		// Clean TensorFlow objects.
+		tfService.dispose();
 
 		log.info(nDetectedObjects + " objects detected.");
 		log.info("Detection done");
