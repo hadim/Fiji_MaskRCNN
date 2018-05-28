@@ -41,6 +41,10 @@ The outputs consist of:
 - `table`: A table containing the coordinates of the bounding boxes of detected objects as well as its score and class label.
 - `masks`: An image mask.
 
+## Screenshots
+
+![Output of the microtubule model.](./screenshot.gif "Output of the microtubule model.")
+
 ## Scripting
 
 Here is an example script:
@@ -98,10 +102,6 @@ table = module.getOutput("resultTable")
 | Objects | Version | Description | URL |
 | --- | --- | --- | --- |
 | Microtubules | 1.0 | Trained with an articially generated dataset. | https://github.com/hadim/Fiji_MaskRCNN/releases/download/Fiji_MaskRCNN-0.4.0/tf_model_microtubule_coco_512.zip
-
-## Screenshots
-
-![Output of the microtubule model.](./screenshot.png "Output of the microtubule model.")
 
 ## Authors
 

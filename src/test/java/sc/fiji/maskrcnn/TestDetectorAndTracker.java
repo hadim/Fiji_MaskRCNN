@@ -27,7 +27,7 @@ public class TestDetectorAndTracker {
 
 		String imagePath = basePath + "single-256x256.tif";
 		imagePath = basePath + "test-tracking-2-frames.tif";
-		// imagePath = basePath + "seed-small-10-frames.tif";
+		imagePath = basePath + "seed-small-10-frames.tif";
 		// imagePath = basePath + "Cell_Colony-1.tif";
 		// imagePath = basePath + "FakeTracks.tif";
 		// imagePath = basePath + "Cell_Colony.tif";
