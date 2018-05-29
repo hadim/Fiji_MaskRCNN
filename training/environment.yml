@@ -23,6 +23,7 @@ dependencies:
   - werkzeug
   - markdown
   - joblib
+  - read-roi
   - pip:
     - keras
     - imgaug
