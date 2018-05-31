@@ -18,7 +18,7 @@ class MicrotubuleConfig(Config):
     # Random crops of size 512x512
     IMAGE_RESIZE_MODE = "square"
     IMAGE_MIN_DIM = 100
-    IMAGE_MAX_DIM = 512
+    IMAGE_MAX_DIM = 1280
     IMAGE_MIN_SCALE = 1.0
 
     # Length of square anchor side in pixels
@@ -70,6 +70,15 @@ class MicrotubuleConfig(Config):
     def set_images_per_gpu(self, n):
         self.IMAGES_PER_GPU = n
         self.BATCH_SIZE = self.IMAGES_PER_GPU * self.GPU_COUNT
+        
+    def set_image_max_dim(self, max_dim):
+        self.IMAGE_MAX_DIM = max_dim
+        # Input image size
+        if self.IMAGE_RESIZE_MODE == "crop":
+            self.IMAGE_SHAPE = np.array([self.IMAGE_MIN_DIM, self.IMAGE_MIN_DIM, 3])
+        else:
+            self.IMAGE_SHAPE = np.array([self.IMAGE_MAX_DIM, self.IMAGE_MAX_DIM, 3])
+
 
 
 class MicrotubuleInferenceConfig(MicrotubuleConfig):

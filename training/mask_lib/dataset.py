@@ -62,7 +62,7 @@ class MicrotubuleDataset(utils.Dataset):
         lines = data.groupby("mt_id").apply(get_line).reset_index(drop=True)
         count = lines.shape[0]
 
-        mask = np.zeros([info['height'], info['width'], count], dtype=np.uint8)
+        mask = np.zeros([info['width'], info['height'], count], dtype=np.uint8)
         for i, line in lines.iterrows():
             mask[:, :, i] = draw_line(mask[:, :, i].copy(), line, info["line_thickness"])
 
