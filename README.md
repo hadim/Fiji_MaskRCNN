@@ -132,7 +132,7 @@ This type of neural networks are much more faster on GPU than CPU. See the follo
 
 *Test done with `Fiji_MaskRCNN-0.4.8`.*
 
-|Model | Version | Device Type | Device | Platform | Detection of Duration (s) |
+|Model | Version | Device Type | Device | Platform | Duration of Detection (s) |
 | --- | --- | --- | --- | --- | --- |
 Microtubule | 1.0 | GPU | GeForce GTX 1050 Ti 4 GB | Linux | **2-3** |
 Microtubule | 1.0 | CPU | Intel i7-7700HQ 2.80GHz 8 cores 16 GB | Linux | **10-11** |
